@@ -6,7 +6,10 @@
     "build": "hexo generate",
     "clean": "hexo clean",
     "deploy": "hexo deploy",
-    "server": "hexo server"
+    "server": "hexo server",
+    "commitmsg": "validate-commit-msg",
+    "commit": "git-cz ",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "hexo": {
     "version": "4.2.0"
@@ -26,6 +29,10 @@
     "hexo-renderer-ejs": "^1.0.0",
     "hexo-renderer-marked": "^2.0.0",
     "hexo-renderer-stylus": "^1.1.0",
-    "hexo-server": "^1.0.0"
+    "hexo-server": "^1.0.0",
+    "commitizen": "^2.3.0",
+    "validate-commit-msg": "^2.11.1",
+    "conventional-changelog-cli": "^1.2.0",
+    "husky": "^0.13.1"
   }
 }
