@@ -18,6 +18,8 @@ before_install:
 # Start: Build Lifecycle
 install:
   - npm install
+  - npm install hexo-renderer-sass --save
+  - npm install --save hexo-autonofollow hexo-directory-category hexo-generator-feed hexo-generator-json-content hexo-generator-sitemap
 
 # 执行清缓存，生成网页操作
 script:
