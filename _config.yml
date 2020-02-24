@@ -99,5 +99,5 @@ theme: Wikitten
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repository: https://github.com/IcyW/IcyWiki.github.io.git
+  repository: https://gh_token@github.com/IcyW/IcyWiki.github.io.git
   branch: master
