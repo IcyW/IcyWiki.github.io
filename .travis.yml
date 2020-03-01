@@ -18,19 +18,29 @@ before_install:
 # Start: Build Lifecycle
 install:
   - npm install
-  - npm install hexo-renderer-sass --save
-  - npm install --save hexo-autonofollow hexo-directory-category hexo-generator-feed hexo-generator-json-content hexo-generator-sitemap
-
 # 执行清缓存，生成网页操作
 script:
   - hexo clean
   - hexo generate
 
-# 设置git提交名，邮箱；替换真实token到_config.yml文件，最后depoy部署
-after_script:
-  - git config user.name "IcyW"
-  - git config user.email "hbj032215@yeah.net"
-  #  替换同目录下的_config.yml文件中gh_token字符串为travis后台刚才配置的变量，注意此处sed命令用了双引号。单引号无效！
-  - sed -i "s/gh_token/${GH_TOKEN}/g" ./_config.yml
-  - hexo deploy
-# End: Build LifeCycle
+# # 设置git提交名，邮箱；替换真实token到_config.yml文件，最后depoy部署
+# after_script:
+#   - git config user.name "IcyW"
+#   - git config user.email "hbj032215@yeah.net"
+#   #  替换同目录下的_config.yml文件中gh_token字符串为travis后台刚才配置的变量，注意此处sed命令用了双引号。单引号无效！
+#   - sed -i "s/gh_token/${GH_TOKEN}/g" ./_config.yml
+#   - hexo deploy
+# # End: Build LifeCycle
+
+# GitHub Pages Deployment
+deploy:    # 部署阶段
+  provider: pages    # 约定 pages 为 GitHub Pages 服务，必须且不可更改
+  skip-cleanup: true  # 必须跳过清理，否则过程中生成的文件（要发布的静态资源）会被清理
+  github-token: $GH_TOKEN  # 部署时使用的 token
+  keep-history: true   # 设置为 false 时，使用 `git push --force` 命令覆盖历史记录
+  on:
+    branch: hexo    # 仅监听 master 分支的变化，才执行构建
+  target-branch: mater   # 用于存放静态资源的分支
+  local-dir: public   # `hexo generate` 命令生成的静态资源所在路径
+  fqdn: mywiki.icyhh.xyz    # 自定义域名
+  
