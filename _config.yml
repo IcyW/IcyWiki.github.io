@@ -95,10 +95,18 @@ ignore:
 ## Themes: https://hexo.io/themes/
 theme: Wikitten
 
+## 支持数学公式
+math:
+  enable: true
+  engine: mathjax
+  mathjax:
+    src: custom_mathjax_source
+    config:
+      
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  # repository: https://gh_token@github.com/IcyW/IcyWiki.github.io.git
-  repository: git@github.com/IcyW/IcyWiki.github.io.git
+  # repository: https://GH_TOKEN@github.com/IcyW/IcyWiki.github.io.git
+  repo: git@github.com/IcyW/IcyWiki.github.io.git
   branch: master
