@@ -107,6 +107,5 @@ math:
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  # repository: https://GH_TOKEN@github.com/IcyW/IcyWiki.github.io.git
-  repo: git@github.com/IcyW/IcyWiki.github.io.git
+  repo: git@github.com:IcyW/IcyWiki.github.io.git
   branch: master
