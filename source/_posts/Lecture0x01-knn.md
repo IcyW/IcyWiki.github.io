@@ -18,7 +18,6 @@ categories: Machine Learning
 | K-Nearest Neighbor  | k最近邻算法 | Yes | Yes | k, 相似度距离算法 |特征维数低，特征以连续值为主，样本量小 |归一化|
 
 
-
 # 2. 建模过程
 
 
@@ -68,7 +67,8 @@ categories: Machine Learning
 ​        todo. 可以改进的点有：改变非连续值特征的编码 / 对不同量纲的特征数据做归一化。
 
 ## 2-2. 训练模型
-​        将数据集切分为训练集测试集，以便验证是否有**过拟合**的问题。这里可以思考的点有：k的选择[4-2](## 4-2. \k的选择) / knn算法的距离选择[4-1](##4-1.相似度评判的方式) / 是否对投票加权。
+​        将数据集切分为训练集测试集，以便验证是否有**过拟合**的问题。这里可以思考的点有：k的选择[4-2](## 4-2. \k的选择) / knn算法的距离选择[4-1](##4-1.相似度评判的方式) / 是否对投票加权 / 数据如果自带顺序，需要shuffle一下。
+
 <img src="http://myimg.icyhh.xyz/ml/03.png?imageView2/format/webp" >
 
 ## 2-3. 测试模型
@@ -140,13 +140,10 @@ $$ \sqrt[p]{\sum_{k=1}^n (x_{ik}-x_{jk})^p} $$
 - 经验规则：k一般低于**训练样本数的平方根**。
 
 
-
-
 # 附录
 Ref. 0 https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
-
 Ref. 1 木东居士 / [机器学习的敲门砖：初探kNN算法](https://mp.weixin.qq.com/s/VslgD9CHyu8w6KQtf3WQYQ)<br/>
-Ref. 2 数月亮 / [机器学习-KNN算法<br/>](https://www.cnblogs.com/gemine/p/11130032.html)
+Ref. 2 数月亮 / [机器学习-KNN算法](https://www.cnblogs.com/gemine/p/11130032.html)<br/>
 Ref. 3 JokerChange /  [KNN浅析（距离、k值等）](https://blog.csdn.net/m0_37075274/article/details/902736920)<br/>
 Ref. 4 [常见距离公式](https://www.zybuluo.com/spiritnotes/note/288072)<br/>
 Ref. 5 lijfrank /  [几种常见的距离计算公式](https://blog.csdn.net/Frank_LJiang/article/details/102646649)<br/>
