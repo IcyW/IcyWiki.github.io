@@ -17,7 +17,7 @@ categories: Machine Learning
 | Mean Absolute Pencentage Error (MAPE）     | 平均绝对百分比误差 | $$[0, +\infty)$$误差越小越好。加权版的MAE                    | $$MAPE = \frac{1}{n}\sum_{i=0}^{n}|\frac{y_i - f(x_i)}{y_i}|$$ | 不易受个别离群点影响，鲁棒性更强；$y_i$有0则不能用。         |
 | Mean Squared Error/Deviation（MSE/D）      | 均方误差           | $$[0, +\infty)$$误差越小越好。也即L2损失。                   | $$MSE = \frac{1}{n}\sum_{i=0}^{n}(f(x_i)-y_i)^2$$            | 更易受到极端值影响                                           |
 | Root Mean Square Error/Deviation（RMSE/D） | 均方根误差         | $$[0, +\infty)$$误差越小越好。MSE开根号                      | $$RMSE = \sqrt{\frac{1}{n}\sum_{i=0}^{n}(f(x_i)-y_i)^2}$$    | 容易受到极端值影响                                           |
-| Normalized Root Mean Square Error（NRMSE） | 归一化的均方根误差 | $$[0, 1]$$误差越小越好。归一化的RMSE                         | $$NRMSE = \frac{RMSE}{y_{max}-y_{min}}$$                     | 容易受到极端值影响                                           |
+| Normalized Root Mean Square Error（NRMSE） | 归一化的均方根误差 | $$(-\infty, 1]$$误差越小越好。归一化的RMSE                   | $$NRMSE = \frac{RMSE}{y_{max}-y_{min}}$$                     | 容易受到极端值影响                                           |
 | Coefficient of determination （R squared） | 决定系数           | $$[0, 1]$$反映因变量的全部变异能通过回归关系被自变量解释的比例，越大越好。 | $$R^2=1-1 - \frac{\sum\limits_i(y_i - f(x_i))^2 }{\sum\limits_i(y_i - \bar{y})^2}$$ | 考虑了预测值与真值之间的差异&问题本身真值之间的差异；归一化的度量标准 |
 
 ## 关于$R^2$的深入了解
@@ -47,8 +47,11 @@ $$R^2=1-\frac{SSE}{SST} = 1 - \frac{\sum\limits_i(y_i - \hat{y_i})^2 / n}{\sum\l
 ### $R^2$的理解
 - 对于$R^2$可以通俗地理解为**使用均值作为误差基准，看预测误差是否大于或者小于均值基准误差。**
 
-  >  R2_score = 1，样本中预测值和真实值完全相等，没有任何误差，表示回归分析中自变量对因变量的解释越好。
+  >  R2_score = 1，样本中预测值和真实值完全相等，没有任何误差，表示回归分析中自变量对因变量的解释越好，也表示我们的预测模型不犯任何错误。
   >  R2_score = 0。此时分子等于分母，样本的每项预测值都等于均值。
+  >
+  >  如果R2_score < 0，说明我们学习到的模型还不如基准模型（样本均值）。很有可能我们的数据不存在任何线性关系。
+  >
   >  R2_score不是R的平方，也可能为负数(分子>分母)，模型等于盲猜，还不如直接计算目标变量的平均值。
 
 ### $R^2$的运用：
@@ -64,17 +67,20 @@ $$R^2=1-\frac{SSE}{SST} = 1 - \frac{\sum\limits_i(y_i - \hat{y_i})^2 / n}{\sum\l
   1. 真实观测值数据中是否有0 ，如果有0值就不能用MPE、MAPE之类的指标；
   2. 数据的分布如何 ，如果是**长尾分布可以选择带对数变换的指标**，中位数指标比平均数指标更好；
   3. 是否存在极端值 ，诸如MAE、MSE、RMSE之类容易受到极端值影响的指标就不要选用；
-  5. 对异常值而言，中位数比均值更加鲁棒，MAE比MSE更不易受到离群值影响；但MAE存在一个严重问题，更新梯度始终相同，这不利于模型的学习。
+  5. 对异常值而言，中位数比均值更加鲁棒，MAE比MSE更不易受到离群值影响；但MAE存在一个严重问题，**绝对值函数不是处处可导的**，更新梯度始终相同，这不利于模型的学习，因此确定损失函数时不能用MAE。但是在评价模型时不影响，可以用。因此模型的评价方法可以和损失函数不同。
   5. 得到的指标是否依赖于量纲 (即绝对度量，而不是相对度量)，如果指标依赖量纲那么不同模型之间可能因为量纲不同而无法比较；（需要归一化）
+  6. **平方操作会放大样本中预测结果和真实结果较大的差距**。MAE没有放大。**而我们就是要解决目标函数最大差距，因为选RMSE更好一点**。
 
-#2. 分类模型中的指标选择
+
+
+# 2. 分类模型中的指标选择
 
 ## 混淆矩阵（confusion_matrix）
 
-|              | 预测值_反例0         | 预测值_正例1        |
+|              | 预测值\_反例0         | 预测值\_正例1        |
 | :----------- | :------------------- | :------------------ |
-| 真实值_反例0 | True Negative（TN）  | FP                  |
-| 真实值_正例1 | False Negative（FN） | True Positive（TP） |
+| 真实值\_反例0 | True Negative（TN）  | False Positive（FP）   |
+| 真实值\_正例1 | False Negative（FN） | True Positive（TP） |
 
 ## 指标
 
@@ -85,28 +91,57 @@ $$R^2=1-\frac{SSE}{SST} = 1 - \frac{\sum\limits_i(y_i - \hat{y_i})^2 / n}{\sum\l
 | accuracy  | 准确度        | $$Accuracy = \frac{TP+TN}{TN+FP+FN+TP}$$                     | 所有样本中预测对的比率                 | 对于原本就有偏（正反例不平衡）的样本集，准确度无法说明问题。 |
 | precision | 查准率        | $$Precision = \frac{TP}{TP+FP}$$                             | 所有预测为正例的样本中真的为正例的比率 | 倾向于只挑选最有把握的样例时，查准率较高。                   |
 | recall    | 查全率/召回率 | $$ Recall = \frac{TP}{TP+FN}$$                               | 所有真实正例中被预测对的比率           | 倾向于预测为1时，查全率较高。                                |
-| F1-score  | /             | $$\frac{1}{F1}=\frac {1} {Precision}+\frac{1}{Recall}$$<br/>$$F1=\frac {2PR} {P+R}$$ | 基于precision与recall的调和平均        | Precision与Recall相互矛盾；而F1越高，模型越稳健。            |
+| F1-score  | -             | $$\frac{1}{F1}=\frac {1} {Precision}+\frac{1}{Recall}$$<br/>$$F1=\frac {2PR} {P+R}$$ | 基于precision与recall的调和平均        | Precision与Recall相互矛盾；而F1越高，模型越稳健。            |
 
 ### P-R曲线
 
 - 在P-R曲线中，Recall为横坐标，Precision为纵坐标。在P-R曲线中，曲线越凸向右上角越好。
 
-> 配图 is on the way
+- P-R曲线的生成方法：算法对样本进行分类时，都会有**置信度**，即表示该样本是正样本的概率，比如99%的概率认为样本Ａ是正例，１％的概率认为样本B是正例。通过选择合适的阈值，比如50%，对样本进行划分，概率大于50%的就认为是正例，小于50%的就是负例。通过置信度就可以**对所有样本进行排序，再逐个样本的选择阈值**，在该样本之前的都属于正例，该样本之后的都属于负例。每一个样本作为划分阈值时，都可以计算对应的precision和recall，那么就可以以此绘制曲线。
+
+  <img src="http://myimg.icyhh.xyz/ml/09.png?imageView2/format/webp" >
+（配图从Lecture0x01中生成）
+
+- Recall值是递增的（但并非严格递增），随着划分点左移，正例被判别为正例的越来越多，不会减少。而精确率precision并非递减，二是有可能振荡的，虽然正例被判为正例的变多，但负例被判为正例的也变多了，因此precision会振荡，但整体趋势是下降。
+
+- P-R曲线肯定会经过（0, 1）点，比如将所有的样本全部判为负例，此时FP=0，TP=0，FN=正样本数，TN=负样本数，则（如果此处推断有误欢迎指出）$$Precision = \frac{TP}{TP+FP} =  \frac{TP}{TP} \rightarrow  1 $$   $$ Recall = \frac{TP}{TP+FN} = 0 $$  
+
+- 随着阈值点左移（变小），将所有的样本全部判为正例时，FN=0，TN=0，FP=负样本数，TP=正样本数，故而有$$ Recall = \frac{TP}{TP+FN} = \frac{TP}{TP} = 1 $$  
+
+- 但曲线最终不会到（1, 0）点。很多P-R曲线的终点看着快到（1,0）点了，可能是因为负例远远多于正例，此时FP$\gg$TP：
+
+  $$Precision = \frac{TP}{TP+FP} \rightarrow  0  $$ 
 
 ### ROC曲线
 
 - ROC曲线称为受试者工作特征曲线 （Receiver Operating Characteristic Curve），又称为感受性曲线（Sensitivity Curve），此名称的由来有二战相关的典故；而AUC（Area Under Curve）是ROC曲线下的面积。在ROC曲线中曲线越凸向左上角越好。
 
-> 配图 is on the way
+  <img src="http://myimg.icyhh.xyz/ml/08.png?imageView2/format/webp" >
+  （配图从Lecture0x01中生成）
 
+- 0.5 < AUC < 1，优于随机猜测。这个分类器（模型）妥善设定阈值的话，能有预测价值。
+
+- AUC = 0.5，跟随机猜测一样（例：丢铜板），模型没有预测价值。
+
+- AUC < 0.5，比随机猜测还差。
+
+- **最优零界点**：保证TPR高的同时FPR要尽量的小，也即找到离（0,1）最近的点。
+
+### 曲线选择
+1、 ROC曲线兼顾正例与负例，所以适用于评估分类器的整体性能；相比而言PR曲线完全聚焦于正例的评判。
+
+2、如果有多份数据且存在不同的类别分布，这时候如果只想单纯地比较分类器的性能且剔除类别分布改变的影响，则ROC曲线比较适合；如果想测试不同类别分布下对分类器的性能的影响，则PR曲线比较适合。
+
+3、相对来讲ROC曲线会稳定很多，在正负样本量都足够的情况下，ROC曲线足够反映模型的判断能力；但类别不平衡问题中，ROC曲线通常会给出一个乐观的效果估计，所以此时候还是PR曲线更好。
 
 
 # 附录
-Ref. 1 木东居士/[机器学习的敲门砖：kNN算法（中）](https://mp.weixin.qq.com/s/vvCM0vWH5kmRfrRWxqXT8Q)
-Ref. 2 饼干 / [评价分类结果（上）](https://mp.weixin.qq.com/s/Fi13jaEkM5EGjmS7Mm_Bjw)
-Ref. 3 饼干 / [模型之母：线性回归的评价指标](https://mp.weixin.qq.com/s/BEmMdQd2y1hMu9wT8QYCPg)
-Ref. 4 云社区 / [回归模型评估指标（机器学习基础）](https://cloud.tencent.com/developer/article/1462976)
-Ref. 5 [深度研究：回归模型评价指标R2_score](https://www.cnblogs.com/jpld/p/12022123.html)
-Ref. 6 kuaizi_sophia / [分类和回归模型常用的性能评价指标](https://blog.csdn.net/kuaizi_sophia/article/details/84942307)
-Ref. 7 大数据文摘 / [机器学习大牛最常用的5个回归损失函数，你知道几个？](https://baijiahao.baidu.com/s?id=1603857666277651546&wfr=spider&for=pc)
-Ref8 [全面了解ROC曲线](https://www.plob.org/article/12476.html)
+Ref. 1 木东居士/[机器学习的敲门砖：kNN算法（中）](https://mp.weixin.qq.com/s/vvCM0vWH5kmRfrRWxqXT8Q)</br>
+Ref. 2 饼干 / [评价分类结果（上）](https://mp.weixin.qq.com/s/Fi13jaEkM5EGjmS7Mm_Bjw)</br>
+Ref. 3 饼干 / [模型之母：线性回归的评价指标](https://mp.weixin.qq.com/s/BEmMdQd2y1hMu9wT8QYCPg)</br>
+Ref. 4 云社区 / [回归模型评估指标（机器学习基础）](https://cloud.tencent.com/developer/article/1462976)</br>
+Ref. 5 [深度研究：回归模型评价指标R2_score](https://www.cnblogs.com/jpld/p/12022123.html)</br>
+Ref. 6 kuaizi_sophia / [分类和回归模型常用的性能评价指标](https://blog.csdn.net/kuaizi_sophia/article/details/84942307)</br>
+Ref. 7 大数据文摘 / [机器学习大牛最常用的5个回归损失函数，你知道几个？](https://baijiahao.baidu.com/s?id=1603857666277651546&wfr=spider&for=pc)</br>
+Ref. 8 [全面了解ROC曲线](https://www.plob.org/article/12476.html)</br>
+Ref. 9 [P-R曲线深入理解](https://blog.csdn.net/b876144622/article/details/80009867)</br>
