@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Lecture0x01_knn | Icy&#39;s wiki</title>
+    
+    
+        <meta name="keywords" content="Machine Learning,Algorithm" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="​        前言：回想起来，距离第一次接触Machine Learning、做project、在组会上做分享，已经过了整整三年，前沿技术一直在发展，甚至YOLO之父 Joseph Redmon都宣布要退出CV界，而我的知识储备却并未增加。为了避免关键时刻生疏，今年初跟随饼干的学习小组，重温机器学习的轶事。  1. KNN若只如初见​        鉴于已经不是第一次与knn约会了，不多寒暄">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lecture0x01_knn">
+<meta property="og:url" content="icyhh.xyz/2020/02/24/Lecture0x01-knn/index.html">
+<meta property="og:site_name" content="Icy&#39;s wiki">
+<meta property="og:description" content="​        前言：回想起来，距离第一次接触Machine Learning、做project、在组会上做分享，已经过了整整三年，前沿技术一直在发展，甚至YOLO之父 Joseph Redmon都宣布要退出CV界，而我的知识储备却并未增加。为了避免关键时刻生疏，今年初跟随饼干的学习小组，重温机器学习的轶事。  1. KNN若只如初见​        鉴于已经不是第一次与knn约会了，不多寒暄">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/01.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/02.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/03.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/04.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/05.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/06-1.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/06-2.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/07.png?imageView2/format/webp">
+<meta property="article:published_time" content="2020-02-24T04:10:42.000Z">
+<meta property="article:modified_time" content="2020-09-23T08:41:04.955Z">
+<meta property="article:author" content="Icy">
+<meta property="article:tag" content="Machine Learning">
+<meta property="article:tag" content="Algorithm">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://myimg.icyhh.xyz/ml/01.png?imageView2/format/webp">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="Icy&#39;s wiki" type="application/atom+xml" />
+    
+
+    
+        <link rel="icon" href="/favicon.ico" />
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Icy&#39;s wiki</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">首页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/categories">分类</a>
+                
+                    <a class="main-nav-link" href="/tags">标签</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">首页</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">归档</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">分类</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">标签</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">关于</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id='categories'>
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id='allExpand' href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree" > 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            DevOps
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/09/23/GitBranch-management/">关于持续交付中Git分支管理的思考</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Machine Learning
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file active"><a href="/2020/02/24/Lecture0x01-knn/">Lecture0x01_knn</a></li>  <li class="file"><a href="/2020/03/02/Lecture0x02-measurement/">Lecture0x02_measurement</a></li>  <li class="file"><a href="/2020/03/11/Lecture0x03-feature/">Lecture0x03_feature engineering</a></li>  <li class="file"><a href="/2020/03/22/Lecture0x04-LinearRegression/">Lecture0x04_LinearRegression</a></li>  <li class="file"><a href="/2020/03/28/Lecture0x05-GradientDescent/">Lecture0x05_GradientDescent</a></li>  <li class="file"><a href="/2020/04/06/Lecture0x06-pipeline/">Lecture0x06_pipeline</a></li>  <li class="file"><a href="/2020/04/12/Lecture0x07-LogisticRegression/">Lecture0x07_LogisticRegression</a></li>  <li class="file"><a href="/2020/04/19/Lecture0x08-DecisionTree/">Lecture0x08_DecisionTree</a></li>  <li class="file"><a href="/2020/04/26/Lecture0x09-PCA/">Lecture0x09-PCA</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            essay
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/">写在2020伊始</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/2020/05/04/Lecture0x10-SVM/">Lecture0x10_SVM</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Lecture0x01-knn" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Machine-Learning/">Machine Learning</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Algorithm/" rel="tag">Algorithm</a>, <a class="tag-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2020/02/24/Lecture0x01-knn/">
+            <time datetime="2020-02-24T04:10:42.000Z" itemprop="datePublished">2020-02-24</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/raw/writing/source/_posts/Lecture0x01-knn.md' target="_blank" rel="noopener"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/edit/writing/source/_posts/Lecture0x01-knn.md' target="_blank" rel="noopener"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/commits/writing/source/_posts/Lecture0x01-knn.md' target="_blank" rel="noopener"> History </a>
+                            </div>
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Lecture0x01_knn
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-KNN若只如初见"><span class="toc-number">1.</span> <span class="toc-text">1. KNN若只如初见</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-建模过程"><span class="toc-number">2.</span> <span class="toc-text">2. 建模过程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-数据集"><span class="toc-number">2.1.</span> <span class="toc-text">2-1. 数据集</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-训练模型"><span class="toc-number">2.2.</span> <span class="toc-text">2-2. 训练模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-测试模型"><span class="toc-number">2.3.</span> <span class="toc-text">2-3. 测试模型</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-手写knn"><span class="toc-number">3.</span> <span class="toc-text">3. 手写knn</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-核心原理"><span class="toc-number">3.1.</span> <span class="toc-text">3-1. 核心原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-效果对比"><span class="toc-number">3.2.</span> <span class="toc-text">3-2. 效果对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-更进一步"><span class="toc-number">4.</span> <span class="toc-text">4. 更进一步</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-相似度评判的方式"><span class="toc-number">4.1.</span> <span class="toc-text">4-1.相似度评判的方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-k的选择"><span class="toc-number">4.2.</span> <span class="toc-text">4-2.k的选择</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#附录"><span class="toc-number">5.</span> <span class="toc-text">附录</span></a></li></ol>
+                </div>
+            
+        
+        
+            <blockquote>
+<p>​        前言：回想起来，距离第一次接触Machine Learning、做project、在组会上做分享，已经过了整整三年，前沿技术一直在发展，甚至YOLO之父 Joseph Redmon都宣布要退出CV界，而我的知识储备却并未增加。为了避免关键时刻生疏，今年初跟随饼干的学习小组，重温机器学习的轶事。</p>
+</blockquote>
+<h1 id="1-KNN若只如初见"><a href="#1-KNN若只如初见" class="headerlink" title="1. KNN若只如初见"></a>1. KNN若只如初见</h1><p>​        鉴于已经不是第一次与knn约会了，不多寒暄直入主题，给它发一个身份卡（持续更新）。</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>中文</th>
+<th>分类模型</th>
+<th>回归模型</th>
+<th>关注参数</th>
+<th>适用场景</th>
+<th>必备技巧</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>K-Nearest Neighbor</td>
+<td>k最近邻算法</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>k, 相似度距离算法</td>
+<td>特征维数低，特征以连续值为主，样本量小</td>
+<td>归一化</td>
+</tr>
+</tbody></table>
+<h1 id="2-建模过程"><a href="#2-建模过程" class="headerlink" title="2. 建模过程"></a>2. 建模过程</h1><h2 id="2-1-数据集"><a href="#2-1-数据集" class="headerlink" title="2-1. 数据集"></a>2-1. 数据集</h2><p>​        恰逢疫情时段，我便尝试拿一份公开的疫情人数<a href="https://lab.isaaclin.cn/nCoV/" target="_blank" rel="noopener">数据</a>来分析一下，做一个简单的、可能并不太合适的建模。<br><img src="http://myimg.icyhh.xyz/ml/01.png?imageView2/format/webp" ></p>
+<p>​        数据和特征决定了机器学习的上限，而模型和算法只是逼近这个上限。对原始数据的预处理对模型结果的优劣会有关键影响，这里我先对数据集做一个简单分析：</p>
+<blockquote>
+<p>provinceName (string): 中文省名<br>provinceEnglishName (string): 英文省名<br>province_zipCode (string): 省邮政编码<br>cityName (string): 中文城市名<br>cityEnglishName (string): 英文城市名<br>city_zipCode (string): 城市邮政编码<br>province_confirmedCount (int): 省确诊人数<br>province_suspectedCount (int): 省疑似人数<br>province_curedCount  (int): 省治愈人数<br>province_deadCount (int): 省死亡人数<br>city_confirmedCount (int): 市确诊人数<br>city_suspectedCount (int): 市疑似人数<br>city_curedCount (int): 市治愈人数<br>city_deadCount (int): 市死亡人数<br>updateTime: 更新时间</p>
+</blockquote>
+<p>​        假设要预测的对象是“市死亡人数”，其他特征都为他打辅助。人数是连续值，这里需要用一个回归模型。<br>​        显而易见，省名、英文省、邮政编码互相之间交叉熵为零，相似度100%，三个特征一起用对结果预测没有增强作用，反而冗余，所以三选一即可。先以最简单地方式处理，留下邮政编码，去除名字特征。</p>
+<p>​       特征X：</p>
+<blockquote>
+<p>province_zipCode (string): 省邮政编码<br>city_zipCode (string): 城市邮政编码<br>province_confirmedCount (int): 省确诊人数<br>province_suspectedCount (int): 省疑似人数<br>province_curedCount  (int): 省治愈人数<br>province_deadCount (int): 省死亡人数<br>city_confirmedCount (int): 市确诊人数<br>city_suspectedCount (int): 市疑似人数<br>city_curedCount (int): 市治愈人数</p>
+</blockquote>
+<p>​       预测对象Y：</p>
+<blockquote>
+<p>city_deadCount (int): 市死亡人数</p>
+</blockquote>
+<p>​        邮政编码在这份表里有缺失，数据预处理需要先对它做个简单的<strong>数据填充</strong>（其实为避免特征噪声，数据存在的情况下对城市名进行重编码会更准确；迫不得已才做这样的数据填充）。</p>
+<img src="http://myimg.icyhh.xyz/ml/02.png?imageView2/format/webp" >
+​        todo. 可以改进的点有：改变非连续值特征的编码 / 对不同量纲的特征数据做归一化。
+
+<h2 id="2-2-训练模型"><a href="#2-2-训练模型" class="headerlink" title="2-2. 训练模型"></a>2-2. 训练模型</h2><p>​        将数据集切分为训练集测试集，以便验证是否有<strong>过拟合</strong>的问题。这里可以思考的点有：k的选择[4-2](## 4-2. \k的选择) / knn算法的距离选择<a href="##4-1.相似度评判的方式">4-1</a> / 是否对投票加权 / 数据如果自带顺序，需要shuffle一下。</p>
+<img src="http://myimg.icyhh.xyz/ml/03.png?imageView2/format/webp" >
+
+<h2 id="2-3-测试模型"><a href="#2-3-测试模型" class="headerlink" title="2-3. 测试模型"></a>2-3. 测试模型</h2><p>​        验证模型的预测结果，这里可以思考的点：有评判指标的选择<a href="https://mywiki.icyhh.xyz/2020/03/02/Lecture0x02-measurement/" target="_blank" rel="noopener">Lecture02</a> ，如何正确的验证模型的效果。<br><img src="http://myimg.icyhh.xyz/ml/04.png?imageView2/format/webp" ></p>
+<h1 id="3-手写knn"><a href="#3-手写knn" class="headerlink" title="3. 手写knn"></a>3. 手写knn</h1><h2 id="3-1-核心原理"><a href="#3-1-核心原理" class="headerlink" title="3-1. 核心原理"></a>3-1. 核心原理</h2><p>​        一言以蔽之预测/分类思路是：找到已知数据集里与自己最相似（e.g. 欧氏距离）的k个样本，借鉴他们的结果（e.g. 回归模型则取平均/加权取平均，分类模型则投票/加权投票）。<br><img src="http://myimg.icyhh.xyz/ml/05.png?imageView2/format/webp" ></p>
+<h2 id="3-2-效果对比"><a href="#3-2-效果对比" class="headerlink" title="3-2. 效果对比"></a>3-2. 效果对比</h2><p>​       首先展示盲选k=5时，在全数据集（训练样本数：51924，测试样本数：5770）中，sklearn封装好的knn表现：</p>
+<img src="http://myimg.icyhh.xyz/ml/06-1.png?imageView2/format/webp" >
+
+<p>​       然后缩小一下数据的范围，取1%的样本数据集（训练样本数：577，测试样本数：519）中，对比一下调包与自己手动实现的效果：</p>
+<img src="http://myimg.icyhh.xyz/ml/06-2.png?imageView2/format/webp" >
+
+<img src="http://myimg.icyhh.xyz/ml/07.png?imageView2/format/webp" >
+
+<p>​       自己手写的knn比sklearn封装的相比，暴力遍历的方式运算耗时过分长[ 时间复杂度O(n) ]，所以不得不放弃在全数据集中做实验——计算最近邻居可以采用KDTree、BallTree等算法，有效加速；在1%的样本数据集中明显过拟合了，$R^2$ 的值在训练集上接近1，在测试集上却为0。</p>
+<h1 id="4-更进一步"><a href="#4-更进一步" class="headerlink" title="4. 更进一步"></a>4. 更进一步</h1><h2 id="4-1-相似度评判的方式"><a href="#4-1-相似度评判的方式" class="headerlink" title="4-1.相似度评判的方式"></a>4-1.相似度评判的方式</h2><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>中文</th>
+<th>定义/用法</th>
+<th>参考公式</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Euclidean metric</td>
+<td>欧几里得度量 / 欧氏距离</td>
+<td>m维空间中两个点之间的真实距离</td>
+<td>$$ \sqrt{(x_i-x_j)^2+(y_i-y_j)^2} $$</td>
+<td>适用于空间问题</td>
+</tr>
+<tr>
+<td>Manhattan Distance</td>
+<td>曼哈顿距离 / 出租车几何</td>
+<td>两个点的绝对轴距总和</td>
+<td>$$</td>
+<td>x_i-x_j</td>
+</tr>
+<tr>
+<td>Chebyshev distance</td>
+<td>切比雪夫距离</td>
+<td>两个点坐标数值差(绝对值)的最大值</td>
+<td>$$ max(</td>
+<td>x_i-x_j</td>
+</tr>
+<tr>
+<td>Mahalanobis Distance</td>
+<td>马氏距离</td>
+<td>测量数据的协方差距离</td>
+<td>$$ \sqrt{(X_i-X_j)^TS^{-1}(X_i-X_j)} $$</td>
+<td>量纲无关，可以排除变量之间的相关性的干扰</td>
+</tr>
+<tr>
+<td>Bhattacharyya Distance</td>
+<td>巴氏距离</td>
+<td>用于测量两个离散或连续概率分布的相似性</td>
+<td>离散概率分布：$$-ln(\sum_{x \in X}\sqrt{p(x)q(x）)})$$<br/>连续概率分布：$$\int{\sqrt{p(x)q(x)}dx} $$</td>
+<td>常在分类中测量类之间的可分离性</td>
+</tr>
+<tr>
+<td>Hamming distance</td>
+<td>汉明距离</td>
+<td>两个等长字符串，将其中一个变为另外一个所需要作的最小替换次数</td>
+<td>（e.g.字符串“1111”与“1001”之间的汉明距离为2。）</td>
+<td>信息编码（使编码间的最小汉明距离尽可能大，增强容错性）</td>
+</tr>
+<tr>
+<td>Cosine</td>
+<td>夹角余弦</td>
+<td>衡量两个向量方向的差异</td>
+<td>$$ cos\theta = \frac{x_ix_j+y_iy_j}{\sqrt{x_i^2+y_i^2}\sqrt{x_j^2+y_j^2}} $$</td>
+<td>数据挖掘中衡量样本向量之间的差异</td>
+</tr>
+<tr>
+<td>Pearson Correlation Coefficient</td>
+<td>皮尔森相关系数</td>
+<td>反映两个变量线性相关程度的统计量</td>
+<td>$$ \rho_{XY} = \frac{E[X-E(X)(Y-E(Y))]} {\sqrt{(D(X)}\sqrt{D(Y)}} $$<br/> 期望：$$E(X) = \frac{\sum{<em>{i=1}^n X_i}}{n}  $$<br/> 方差：$$D(X) = E{[X-E(X)]^2}  $$ <br/>相关距离： $$1 - \rho</em>{XY}$$</td>
+<td>线性相关系数</td>
+</tr>
+<tr>
+<td>Jaccard similarity coefficient</td>
+<td>杰卡德相似系数</td>
+<td>用两个集合中不同元素占所有元素的比例来衡量两个集合的区分度</td>
+<td>$$J(A,B)= \frac{</td>
+<td>A\cap B</td>
+</tr>
+</tbody></table>
+<p>​       此外提一下，闵可夫斯基距离（Minkowski Distance）是一组距离的定义，公式中有一个变参p：</p>
+<p>$$ \sqrt[p]{\sum_{k=1}^n (x_{ik}-x_{jk})^p} $$</p>
+<ol>
+<li>当p=1时，是曼哈顿距离；</li>
+<li>当p=2时，是欧氏距离；</li>
+<li>当p→∞时，就是切比雪夫距离。</li>
+</ol>
+<p>​       其他需要注意的 / 经验记录：</p>
+<ul>
+<li><p>值域越大的变量常常会在距离计算中占据主导作用，因此应先对变量进行<strong>归一化</strong>。</p>
+</li>
+<li><p>当变量数越多，欧式距离的区分能力就越差。</p>
+</li>
+</ul>
+<h2 id="4-2-k的选择"><a href="#4-2-k的选择" class="headerlink" title="4-2.k的选择"></a>4-2.k的选择</h2><ol>
+<li><p>如果k太小，分类结果易受噪声点影响，误差会增大；</p>
+</li>
+<li><p>如果k太大，近邻中又可能包含太多的其它类别的点（对距离加权，可以降低k值设定的影响）；</p>
+</li>
+<li><p>在实际应用中，K值一般取一个比较小的数值，例如采用<strong>交叉验证法（cross-validation）</strong>来选择最优的K值。</p>
+</li>
+</ol>
+<ul>
+<li>经验规则：k一般低于<strong>训练样本数的平方根</strong>。</li>
+</ul>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 0 <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html</a><br>Ref. 1 木东居士 / <a href="https://mp.weixin.qq.com/s/VslgD9CHyu8w6KQtf3WQYQ" target="_blank" rel="noopener">机器学习的敲门砖：初探kNN算法</a><br/><br>Ref. 2 数月亮 / <a href="https://www.cnblogs.com/gemine/p/11130032.html" target="_blank" rel="noopener">机器学习-KNN算法</a><br/><br>Ref. 3 JokerChange /  <a href="https://blog.csdn.net/m0_37075274/article/details/902736920" target="_blank" rel="noopener">KNN浅析（距离、k值等）</a><br/><br>Ref. 4 <a href="https://www.zybuluo.com/spiritnotes/note/288072" target="_blank" rel="noopener">常见距离公式</a><br/><br>Ref. 5 lijfrank /  <a href="https://blog.csdn.net/Frank_LJiang/article/details/102646649" target="_blank" rel="noopener">几种常见的距离计算公式</a><br/></p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/2020/03/02/Lecture0x02-measurement/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Lecture0x02_measurement
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">写在2020伊始</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Icy &copy; 2020 
+            <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a>
+            <br> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme - <a href="https://github.com/zthxxx/hexo-theme-Wikitten" target="_blank" rel="noopener">wikitten</a>
+            
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+            
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

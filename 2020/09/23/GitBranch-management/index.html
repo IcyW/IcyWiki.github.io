@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>关于持续交付中Git分支管理的思考 | Icy&#39;s wiki</title>
+    
+    
+        <meta name="keywords" content="DevOps" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Aim at always writing production-ready code.  一、背景&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; 提升研发效率（EP， Engineering Productivity），建立CI&#x2F;CD体系，让持续自动化和持续监控贯穿于应用的整个生命周期已经成为有技术追求的攻城狮们的共识。&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; 持续交付是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于持续交付中Git分支管理的思考">
+<meta property="og:url" content="icyhh.xyz/2020/09/23/GitBranch-management/index.html">
+<meta property="og:site_name" content="Icy&#39;s wiki">
+<meta property="og:description" content="Aim at always writing production-ready code.  一、背景&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; 提升研发效率（EP， Engineering Productivity），建立CI&#x2F;CD体系，让持续自动化和持续监控贯穿于应用的整个生命周期已经成为有技术追求的攻城狮们的共识。&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; 持续交付是">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/1-0.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/2-0.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/2-1.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/2-3.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/2-4-good.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/2-5.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/2-6.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-0-cut.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-1.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-21a.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-21b.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-22a.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-22b.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-22c.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-23a.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-23b.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-23c.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/3-21a.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/4-0.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/4-1-mas.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/4-2-mas.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/4-4a.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/4-4b.png">
+<meta property="og:image" content="http://myimg.icyhh.xyz/branch_management/4-4c.png">
+<meta property="article:published_time" content="2020-09-22T23:36:58.000Z">
+<meta property="article:modified_time" content="2020-09-23T08:41:04.955Z">
+<meta property="article:author" content="Icy">
+<meta property="article:tag" content="DevOps">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://myimg.icyhh.xyz/branch_management/1-0.png">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="Icy&#39;s wiki" type="application/atom+xml" />
+    
+
+    
+        <link rel="icon" href="/favicon.ico" />
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Icy&#39;s wiki</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">首页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/categories">分类</a>
+                
+                    <a class="main-nav-link" href="/tags">标签</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">首页</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">归档</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">分类</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">标签</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">关于</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id='categories'>
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id='allExpand' href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree" > 
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            DevOps
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file active"><a href="/2020/09/23/GitBranch-management/">关于持续交付中Git分支管理的思考</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            Machine Learning
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/24/Lecture0x01-knn/">Lecture0x01_knn</a></li>  <li class="file"><a href="/2020/03/02/Lecture0x02-measurement/">Lecture0x02_measurement</a></li>  <li class="file"><a href="/2020/03/11/Lecture0x03-feature/">Lecture0x03_feature engineering</a></li>  <li class="file"><a href="/2020/03/22/Lecture0x04-LinearRegression/">Lecture0x04_LinearRegression</a></li>  <li class="file"><a href="/2020/03/28/Lecture0x05-GradientDescent/">Lecture0x05_GradientDescent</a></li>  <li class="file"><a href="/2020/04/06/Lecture0x06-pipeline/">Lecture0x06_pipeline</a></li>  <li class="file"><a href="/2020/04/12/Lecture0x07-LogisticRegression/">Lecture0x07_LogisticRegression</a></li>  <li class="file"><a href="/2020/04/19/Lecture0x08-DecisionTree/">Lecture0x08_DecisionTree</a></li>  <li class="file"><a href="/2020/04/26/Lecture0x09-PCA/">Lecture0x09-PCA</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            essay
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/">写在2020伊始</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/2020/05/04/Lecture0x10-SVM/">Lecture0x10_SVM</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-GitBranch-management" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/DevOps/">DevOps</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/DevOps/" rel="tag">DevOps</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2020/09/23/GitBranch-management/">
+            <time datetime="2020-09-22T23:36:58.000Z" itemprop="datePublished">2020-09-23</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/raw/writing/source/_posts/GitBranch-management.md' target="_blank" rel="noopener"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/edit/writing/source/_posts/GitBranch-management.md' target="_blank" rel="noopener"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/commits/writing/source/_posts/GitBranch-management.md' target="_blank" rel="noopener"> History </a>
+                            </div>
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            关于持续交付中Git分支管理的思考
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、背景"><span class="toc-number">1.</span> <span class="toc-text">一、背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、现状分析"><span class="toc-number">2.</span> <span class="toc-text">二、现状分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#分支生存周期统计"><span class="toc-number">2.1.</span> <span class="toc-text">分支生存周期统计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#壹"><span class="toc-number">2.1.1.</span> <span class="toc-text">壹</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#贰"><span class="toc-number">2.1.2.</span> <span class="toc-text">贰</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#叁"><span class="toc-number">2.1.3.</span> <span class="toc-text">叁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#肆"><span class="toc-number">2.1.4.</span> <span class="toc-text">肆</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#伍"><span class="toc-number">2.1.5.</span> <span class="toc-text">伍</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、分支管理策略"><span class="toc-number">3.</span> <span class="toc-text">三、分支管理策略</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1分支管理-EPC等级"><span class="toc-number">3.1.</span> <span class="toc-text">3.1分支管理 - EPC等级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2持续交付-分支管理模式"><span class="toc-number">3.2.</span> <span class="toc-text">3.2持续交付 - 分支管理模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-1-初级「主干开发，主干集成」"><span class="toc-number">3.2.0.1.</span> <span class="toc-text">3.2.1 初级「主干开发，主干集成」</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-2-「分支开发，主干集成」"><span class="toc-number">3.2.0.2.</span> <span class="toc-text">3.2.2 「分支开发，主干集成」</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-3-「主干开发，分支集成」"><span class="toc-number">3.2.0.3.</span> <span class="toc-text">3.2.3 「主干开发，分支集成」</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-4-高级「主干开发，主干集成」"><span class="toc-number">3.2.0.4.</span> <span class="toc-text">3.2.4 高级「主干开发，主干集成」</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、细节建议方案"><span class="toc-number">4.</span> <span class="toc-text">四、细节建议方案</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#【重点】针对问题项目的分支管理改进"><span class="toc-number">4.1.</span> <span class="toc-text">【重点】针对问题项目的分支管理改进</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-分支与需求单"><span class="toc-number">4.2.</span> <span class="toc-text">4.1 分支与需求单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-代码提交规范"><span class="toc-number">4.3.</span> <span class="toc-text">4.2. 代码提交规范</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-3-辅助工具"><span class="toc-number">4.4.</span> <span class="toc-text">4.3. 辅助工具</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-1-分支命名规范"><span class="toc-number">4.4.1.</span> <span class="toc-text">4.3.1 分支命名规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-2-关联tapd并规范commit"><span class="toc-number">4.4.2.</span> <span class="toc-text">4.3.2 关联tapd并规范commit</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#结语"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#附录"><span class="toc-number">6.</span> <span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#持续交付中的分支管理"><span class="toc-number">6.0.1.</span> <span class="toc-text">持续交付中的分支管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Git分支规范好工具"><span class="toc-number">6.0.2.</span> <span class="toc-text">Git分支规范好工具</span></a></li></ol></li></ol></li></ol>
+                </div>
+            
+        
+        
+            <blockquote>
+<p>Aim at always writing production-ready code.</p>
+</blockquote>
+<h1 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 提升研发效率（EP， Engineering Productivity），建立CI/CD体系，让持续自动化和持续监控贯穿于应用的整个生命周期已经成为有技术追求的攻城狮们的共识。<br><img src="http://myimg.icyhh.xyz/branch_management/1-0.png" alt="CI/CD"><br>&nbsp; &nbsp; &nbsp; &nbsp; 持续交付是对整个软件交付模式的变革，涉及到的内容非常多、非常广，在这个模型中大概有二十多个关键点。根据[EPC（Engineering Productivity Certification） 1.0]的要求，需要覆盖到的有以下12个维度：</p>
+<pre><code>0、需求协作管理    
+1、配置管理    
+2、制品库管理    
+3、分支管理    
+4、代码质量管理    
+5、测试管理    
+6、持续集成管理    
+7、自动化测试    
+8、开发测试与测试环境管理    
+9、发布    
+10、架构    
+11、数据觉察</code></pre><p>&nbsp; &nbsp; &nbsp; &nbsp; 虽然距离这些概念的提出已经有段时间了，对相关实践如何落地，大家大多处于探索、转变的阶段。经过这段时间的宅家分析与痛点沟通之后，我整理了一些想法，针对模型中的「分支管理」这一维度聚焦来谈谈。</p>
+<h1 id="二、现状分析"><a href="#二、现状分析" class="headerlink" title="二、现状分析"></a>二、现状分析</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 我们所对接的业务方产品形态十分多样，从移动端iOS、Android，到微信小程序、H5页面，再到PC web等等，每个开发团队都在历史的长河中形成了各自不同的开发习惯和分支管理策略。</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 以其中一个典型的项目为例，我调用了开放API简单分析了一下项目（已脱敏）当前的分支状况。</p>
+<h2 id="分支生存周期统计"><a href="#分支生存周期统计" class="headerlink" title="分支生存周期统计"></a>分支生存周期统计</h2><h3 id="壹"><a href="#壹" class="headerlink" title="壹"></a>壹</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 首先我拉取了项目中所有分支的信息，简单画出它们从被创建（begin_time）到销毁（delete_time）总共存在了多长时间；如果还未销毁，就计算到今天为止。<br><img src="http://myimg.icyhh.xyz/branch_management/2-0.png" alt="begin2delete"></p>
+<ul>
+<li>虽然是新建不久的项目，但是分支已经有182个，其中有五个存在超过了100天。还有31%的分支超过了一个月。</li>
+</ul>
+<p><img src="http://myimg.icyhh.xyz/branch_management/2-1.png" alt="begin2delete_cal"></p>
+<ul>
+<li>说不定只是因为<strong>没有约定好删除分支的规范</strong>，而非真的有3成的需求开发时间超过一个月呢？</li>
+</ul>
+<h3 id="贰"><a href="#贰" class="headerlink" title="贰"></a>贰</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 所以假设<strong>不再有提交的分支其实是可以被废弃的</strong>。我又计算了一下分支从被创建（begin_time）到销毁（last_push_time）总共存在了多长时间。</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/2-3.png" alt="begin2last_push_cal"></p>
+<ul>
+<li>虽然分支的使用时间的确是缩短了一些，可是只有40%的分支存在天数小于一周，剩下的长周期分支中依然有2成<strong>存在时间大于一个月</strong>。</li>
+</ul>
+<h3 id="叁"><a href="#叁" class="headerlink" title="叁"></a>叁</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 接下来再仔细看看这些「超长周期」的分支是什么情况。</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/2-4-good.png" alt="long_time"></p>
+<ul>
+<li>在这个项目中，tiyan分支是作为类似发布分支的存在，master分支退居二线做开发使用，而test分支存放的是<strong>隔离开的单元测试和接口测试</strong>等等代码；后续存在了超过五十天的大部分是<strong>个人使用</strong>的bugfix分支。</li>
+<li>那么问题来了。诸位看官可以思考一下 ① 测试代码不是同源同管理会有什么弊端 ② 长期存在多个分支、没有限制更新与合入时间会有什么弊端。</li>
+</ul>
+<h3 id="肆"><a href="#肆" class="headerlink" title="肆"></a>肆</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 大舒一口气，从分支角度看，至少我们的需求大部分并不是真的要开发数月才能上线，而是有机会做到小步快跑的？那么「存在周期中等长度」的分支又是什么情况呢。<br><img src="http://myimg.icyhh.xyz/branch_management/2-5.png" alt="middle_time"></p>
+<ul>
+<li>开发周期大于10天的需求依然不少，是否因为<strong>需求拆解</strong>不够小？或是<strong>开发框架组件化</strong>解耦得不够细？还是<strong>自动化测试</strong>的基建不够好呢？</li>
+<li>除此之外还暴露出了另一个问题，分支的<strong>命名格式</strong>也太多样了吧。特别是经历过<strong>项目交接</strong>之后，不同团队中的不同个人都以各自的习惯提交？更不用说<strong>git commit的规范</strong>了，不方便回溯。</li>
+</ul>
+<h3 id="伍"><a href="#伍" class="headerlink" title="伍"></a>伍</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 存在周期长的分支问题暴露了这么多，最后剩下的「较短周期」的分支应该总没问题了吧？</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/2-6.png" alt="short_time"></p>
+<ul>
+<li>通过分支名统计了一下存在天数在十天以下的分支的用处，除了<strong>命名不规范</strong>没有被我统计到的以外，用于fix作用的分支与feature分支各占一半，比较符合预期。</li>
+</ul>
+<h1 id="三、分支管理策略"><a href="#三、分支管理策略" class="headerlink" title="三、分支管理策略"></a>三、分支管理策略</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 经过上述的简单统计后，大家可能只是对该案例项目的分支之多、生存周期之长有深刻印象。那么在<strong>EPC标准</strong>中，对于分支管理道理有什么要求，在《持续交付2.0》中对于分支管理又有什么建议呢。</p>
+<h2 id="3-1分支管理-EPC等级"><a href="#3-1分支管理-EPC等级" class="headerlink" title="3.1分支管理 - EPC等级"></a>3.1分支管理 - EPC等级</h2><p><img src="http://myimg.icyhh.xyz/branch_management/3-0-cut.png" alt="EPC"><br>&nbsp; &nbsp; &nbsp; &nbsp; 将[EPC 1.0]要求列出来后可以发现，在分支管理这个维度上，最终目标（Level 4）倒也算清晰简洁；除了要求分支要统一的命名规范外，量化指标就俩： </p>
+<p>*<em>1. 分支存在的周期要短，80%的分支&lt;=2天， *</em></p>
+<p><strong>2. 每次提交的内容要少，80%的提交 &lt; 200行代码</strong>（除客户端UI的布局文件和相关配置文件外）。</p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 当然，要在业务需求的开发过程中实现这两点目标，却不是一件容易的事情。</p>
+<h2 id="3-2持续交付-分支管理模式"><a href="#3-2持续交付-分支管理模式" class="headerlink" title="3.2持续交付 - 分支管理模式"></a>3.2持续交付 - 分支管理模式</h2><p>&nbsp; &nbsp; &nbsp; &nbsp; 除了上述提及的两个分数要求外，大家应该也注意到了「分支开发，主干集成」的模式，悄悄地转变为了「主干开发，分支集成」的模式。<br>&nbsp; &nbsp; &nbsp; &nbsp; 而最理想化的状态竟是「主干开发，主干集成」。一开始看到这个理念我也很不解，一旦抛弃了分支的存在，强大如<a href="https://www.runoob.com/git/git-branch.html" target="_blank" rel="noopener">Git所拥有的必杀技</a>不就被禁足，一日被打回原型，与其他版本控制系统无异了吗？</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/3-1.png" alt="git branch"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 且慢，<strong>这个「主干开发，主干集成」的理想国故事，还要从「主干开发，主干集成」的伊甸园开始说起。</strong></p>
+<h4 id="3-2-1-初级「主干开发，主干集成」"><a href="#3-2-1-初级「主干开发，主干集成」" class="headerlink" title="3.2.1 初级「主干开发，主干集成」"></a>3.2.1 初级「主干开发，主干集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-21a.png" alt="321-a"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 摘录自乔老师在《持续集成2.0》中的描述。很好理解，其实个人开发或是2、3个人的小团队，需求不多时间不紧时，往往大家就是这样直接在master上修改，git提供的就是纯粹的代码备份服务。</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/3-21b.png" alt="321-b"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 如果master代码处于长期不可用状态，只有等到所有功能开发完后才进行联调和集成测试，这就是「低频交付」的模式。</p>
+<h4 id="3-2-2-「分支开发，主干集成」"><a href="#3-2-2-「分支开发，主干集成」" class="headerlink" title="3.2.2 「分支开发，主干集成」"></a>3.2.2 「分支开发，主干集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-22a.png" alt="322-a特性分支模式"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 当一个发布周期中的需求逐渐多了起来，需要合作的开发同学越来越多，新老同学的技术水平参差不齐的时候，就会发现Git的分支模型非常稳妥地提供了一种并行开发的解决方案，安全有保障、协作无干扰，这也是「特性分支模式」为什么备受青睐，广为业务团队所接受的原因（之一）。<br><img src="http://myimg.icyhh.xyz/branch_management/3-22b.png" alt="322-b"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 若是更大规模的团队（40人以上）共同开发一款产品，就更倾向于运用如上的分支开发模式。</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/3-22c.png" alt="322-c"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 总的来说这个模式挺好的，唯一的弊端可能出现在合并的时候，一旦多个需求的修改有冲突，就会比较费神。<br>&nbsp; &nbsp; &nbsp; &nbsp; 若要成功使用这种模式，其关键点在于：</p>
+<p>*<em>1. 让主干尽可能一直保持着在可发布状态； *</em></p>
+<p>*<em>2. 每个分支的生命周期尽可能短； *</em></p>
+<p>*<em>3. 主干代码尽早与分支同步； *</em></p>
+<p><strong>4. 一切以主干代码为准，尽可能不要在各特性分支之间合并代码。</strong></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 但是分支开发模式，其实从本质上就是与持续集成的理念相互冲突的。持续集成是希望每次修改都尽早的提交到主干，主干总是处于最完整和最新的可用状态，充分验证后就可以用它来进行生产部署。而使用分支开发模式时，由于无法及时合并到主干，那么<strong>时间越长与主干差别越大，风险就越高，最终合并的时候就越痛苦</strong>。所以持续交付不推荐使用分支开发的模式[Ref. 3]。</p>
+<h4 id="3-2-3-「主干开发，分支集成」"><a href="#3-2-3-「主干开发，分支集成」" class="headerlink" title="3.2.3 「主干开发，分支集成」"></a>3.2.3 「主干开发，分支集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-23a.png" alt="323-a"><br>&nbsp; &nbsp; &nbsp; &nbsp; 来到发布前的集成测试节点了，功能已经全部开发完毕，通常这时候客户端团队就会从代码中拉出「发布」分支。</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/3-23b.png" alt="323-b"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 模型中所示的“质量打磨周期”（Branch Stabilization Time）越短，说明主干质量越好，当打磨周期极短时，就可以转换到高频的「主干开发，主干集成」模式。</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/3-23c.png" alt="323-c"></p>
+<h4 id="3-2-4-高级「主干开发，主干集成」"><a href="#3-2-4-高级「主干开发，主干集成」" class="headerlink" title="3.2.4 高级「主干开发，主干集成」"></a>3.2.4 高级「主干开发，主干集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-21a.png" alt="321-a"></p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 是的，与3.2.1是同一张图，但是看到这里，相信大家应当对为何「主干开发，主干集成」是最低级的模式同时又是最高级的模式有所理解了。相比于「低频交付」的状态，「高频交付」状态下对代码质量的要求相当高，几乎是落子无bug的境界（笑）。<br>&nbsp; &nbsp; &nbsp; &nbsp; 需要进行版本控制的<strong>不仅是源代码</strong>，还有测试代码、数据库脚本、构建和部署脚本、依赖的库文件等，并且对构建产物的版本控制也同样重要。只有这些内容都纳入版本控制了，才能够确保所有的开发、测试、运维活动能够正常开展，系统能够被完整的搭建。持续交付建议的方式是频繁的提交代码，并且最好工作在主干上，这样一来<strong>修改对所有项目成员都快速可见</strong>，然后通过持续集成的机制，对修改触发快速的自动化验证和反馈，再往后如果能通过各种维度的验证测试，最终将成为潜在可发布和部署到生产环境的中版本[Ref. 3]。<br>&nbsp; &nbsp; &nbsp; &nbsp; 深入了解持续交付中对于分支管理的要求或者说期许之后，希望没有打击到大家的信心 / 希望反而能<strong>激起大家的技术追求</strong>。那么下一篇章就来谈谈一些近期搜刮到的/实用的/接地气的辅助方案了。</p>
+<h1 id="四、细节建议方案"><a href="#四、细节建议方案" class="headerlink" title="四、细节建议方案"></a>四、细节建议方案</h1><p>&nbsp; &nbsp; &nbsp; &nbsp;个人认为， 上述提到的向「主干开发，主干集成」靠拢的模式思路更适用于<strong>发布频率固定且快、质量要求高</strong>的处于快速生长期的客户端（e.g. iOS、Android）/类客户端（e.g. 小程序）产品。不同的产品形态、不同的产品周期还是要因地制宜地选择适合当前发展状态的分支管理模式。比如对于嵌入在APP不同位置的H5页面，因为相互独立故而可以选择建立分别的仓库直接采用主干开发的方式。<br>&nbsp; &nbsp; &nbsp; &nbsp;有些场景下，迫不得已要采用分支开发的模式，比如并行需求太多且相互干扰，或者在需求开发的同时有大块的重构工作要做，或者针对特定的用户开发特殊的功能，以及需要进行与主线无关的试验等等。这时拉出分支其实意味着已经在持续集成/持续交付上做出了妥协，那么我们建议至少要使用一些折中的方案[Ref. 3]：</p>
+<ol>
+<li><strong>尽量缩短分支的周期，最长也不要超过迭代周期；</strong></li>
+<li><strong>每个分支上运行单独的测试流水线，保证质量。虽然这种方式浪费资源，而且其实也没进行”真正的“集成；</strong></li>
+<li><strong>分支只与主干合并代码，分支彼此之间尽量不做合并；</strong></li>
+<li><strong>分支定期合并主干上的变更；</strong></li>
+</ol>
+<h2 id="【重点】针对问题项目的分支管理改进"><a href="#【重点】针对问题项目的分支管理改进" class="headerlink" title="【重点】针对问题项目的分支管理改进"></a>【重点】针对问题项目的分支管理改进</h2><p>&nbsp; &nbsp; &nbsp; &nbsp;针对第二节中分析的典型项目，我想可以有如下的改进方式：</p>
+<p><img src="http://myimg.icyhh.xyz/branch_management/4-0.png" alt="4-0"></p>
+<ol>
+<li>按照上图所示的分支模式进行管理，除了主干与发布分支以外，其他不必要的分支均删去，减少与主干产生大差异的机会；</li>
+<li><strong>测试代码</strong>、数据库脚本、构建和部署脚本、依赖的库文件等等合入主干与源代码同源管理；</li>
+<li>分支与需求绑定起来，使得每一次的修改有据可循（可参考4.1）；</li>
+<li>约定特性分支的命名规范（比如feat_20200229_market，表示该特性分支最多存在到二月29日就要删去，功能是market），可以通过插件约束不规范分支的提交（可参考4.3）；</li>
+<li>遵循git commit的提交信息规范，限制不合规范的messages的提交（可参考4.2）；</li>
+<li>除非特殊需要，所有特性分支的存在周期都尽量压缩到五天以内；持续暗示自己分支不过周末。</li>
+</ol>
+<h2 id="4-1-分支与需求单"><a href="#4-1-分支与需求单" class="headerlink" title="4.1 分支与需求单"></a>4.1 分支与需求单</h2><p>&nbsp; &nbsp; &nbsp; &nbsp; 在3.2.2的模式中，每一个特性分支的创建都是为需求服务的。要想达到每个分支都在很短时间内消失的目标，不可否认前提条件是<strong>产品对需求的拆解</strong>和<strong>开发对代码的解耦</strong>都具备很高的能力，这是值得另开篇章阐述的话题，此处先留个#href的坑。<br>&nbsp; &nbsp; &nbsp; &nbsp; 为了解决当前分支凌乱的问题，有一种办法是在需求单<strong>转入开发中时自动创建分支</strong>，git commit时提交关键字<strong>与需求ID绑定</strong>起来，不仅可以追溯每一次代码的变更都为了达成什么目的，划分模块责任人，更可以在git push的同时<strong>一键转单评论</strong>，繁琐的流程和鼠标点点点操作通通不存在。<br>&nbsp; &nbsp; &nbsp; &nbsp;  参考《TAPD（腾讯敏捷产品研发平台）-工蜂Git关联新特性》，只需三步，轻松上手。</p>
+<ol>
+<li>TAPD项目下启用「源码」应用，应用设置中关联相应的GIT仓库。</li>
+<li>需求单与GIT分支关联。</li>
+<li>Smart Commit关键字提交时触发状态流转。</li>
+</ol>
+<p>效果示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m <span class="string">"fix: test --story=857210425 TAPD vs GIT #finish"</span></span><br><span class="line">$ git push</span><br></pre></td></tr></table></figure>
+
+<p><img src="http://myimg.icyhh.xyz/branch_management/4-1-mas.png" alt="4-1">   </p>
+<p>&nbsp; &nbsp; &nbsp; &nbsp; 分支关联需求单，commit关联需求提测 / bug解决，状态流转一步到位。</p>
+<h2 id="4-2-代码提交规范"><a href="#4-2-代码提交规范" class="headerlink" title="4.2. 代码提交规范"></a>4.2. 代码提交规范</h2><p>&nbsp; &nbsp; &nbsp; &nbsp;编写规范良好的commit messages的优点无需赘言。不仅提高后续code review的效率，帮助团队成员清晰地了解到每一次提交修改了什么特性，也方便了版本日志的生成。<br>&nbsp; &nbsp; &nbsp; &nbsp;业界最常用的<a href="https://www.ruanyifeng.com/blog/2016/01/commit_message_change_log.html" target="_blank" rel="noopener">Angular规范</a>如下（只展示Header要求）：</p>
+<pre><code>&lt;type&gt;[optional scope]: &lt;description&gt;</code></pre><p>&nbsp; &nbsp; &nbsp; &nbsp; Header部分只有一行，其中<code>&lt;type&gt;</code>用于说明 commit 的类别，只允许使用下面7个标识：</p>
+<pre><code>feat：新功能（feature）
+fix：修补bug
+docs：文档（documentation）
+style： 格式（不影响代码运行的变动）
+refactor：重构（即不是新增功能，也不是修改bug的代码变动）
+test：增加测试
+chore：构建过程或辅助工具的变动</code></pre><p>&nbsp; &nbsp; &nbsp; &nbsp; <code>&lt;scope&gt;</code>用于说明 commit 影响的范围，比如数据层、控制层、视图层等等，视项目不同而不同。是可选项。<br>&nbsp; &nbsp; &nbsp; &nbsp; <code>&lt;description&gt;</code>是 commit 目的的简短描述，不超过50个字符。</p>
+<h2 id="4-3-辅助工具"><a href="#4-3-辅助工具" class="headerlink" title="4.3. 辅助工具"></a>4.3. 辅助工具</h2><p>&nbsp; &nbsp; &nbsp; &nbsp; 无论是何种规范的制定，最终目的都是服务于研发流程的提效，如果它的存在阻碍了开发的丝滑进行，那它就不是一个好的规范。<br>&nbsp; &nbsp; &nbsp; &nbsp; 所以我们需要一些自动化的提示和约束，来方便标准化规范的落实。</p>
+<h3 id="4-3-1-分支命名规范"><a href="#4-3-1-分支命名规范" class="headerlink" title="4.3.1 分支命名规范"></a>4.3.1 分支命名规范</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 参考《Feflow在CI中检查项目Git规范》提供的前端方案，feflow-plugin-check插件（后续可能会对外开源：<a href="https://github.com/iv-web/feflow）" target="_blank" rel="noopener">https://github.com/iv-web/feflow）</a>:</p>
+<pre><code>* 分支版本命名规则：分支类型_分支发布时间_分支功能。比如：feature_20170401_fairy_flower
+* 分支类型包括：feature、 bugfix、refactor三种类型，即新功能开发、bug修复和代码重构
+* 时间使用年月日进行命名，不足2位补0
+* 分支功能命名使用snake case命名法，即下划线命名。</code></pre><p><strong>效果示例：</strong><br><img src="http://myimg.icyhh.xyz/branch_management/4-2-mas.png" alt="4-3-1"></p>
+<h3 id="4-3-2-关联tapd并规范commit"><a href="#4-3-2-关联tapd并规范commit" class="headerlink" title="4.3.2 关联tapd并规范commit"></a>4.3.2 关联tapd并规范commit</h3><p>参考《优雅提交git commit并强制关联tapd需求单》提供的方案（后续可能会对外开源），只需两步：<br>（1）添加package.json 和 commitlint.config.js 文件。<br>（2）执行tnpm install</p>
+<p><strong>效果示例：</strong><br>a) 没有输入正确的tapd关联<br><img src="http://myimg.icyhh.xyz/branch_management/4-4a.png" alt="没有输入正确的tapd关联"><br>b) 没有输入正确的Angular规范<br><img src="http://myimg.icyhh.xyz/branch_management/4-4b.png" alt="没有输入正确的Angular规范"><br>c) 符合要求的commit message<br><img src="http://myimg.icyhh.xyz/branch_management/4-4c.png" alt="符合要求的commit message"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 良好的分支管理只是实现持续交付持续部署的其中一个必不可少的环节，要让DevOps更丝滑，研发流程效率更高，还需要产品-开发-测试同学更加专业化、更加规范化地一同努力。</p>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h3 id="持续交付中的分支管理"><a href="#持续交付中的分支管理" class="headerlink" title="持续交付中的分支管理"></a>持续交付中的分支管理</h3><p>Ref. 1 <a href="http://www.read678.com/JdBook/index/6589" target="_blank" rel="noopener">乔梁-《持续交付2.0业务引领的DevOps精要》</a></p>
+<p>Ref. 2 <a href="http://km.oa.com/group/11831/articles/show/299416" target="_blank" rel="noopener">{内部}持续交付体系设计与实践 - 工程效率提升之路</a></p>
+<p>Ref. 3 <a href="https://mp.weixin.qq.com/s?__biz=MzI4NTA1MDEwNg==&mid=2650757465&idx=1&sn=ec6c9c4aee13deaecf48619ea0c5cd95&chksm=f3f9ecccc48e65dac50638240f9ee6d6af1648b00d8e6baa84f446075809defed0f74e8ce0da&mpshare=1&scene=23&srcid=0211hJxP8eYjCTcPmENhn0Uy%23rd" target="_blank" rel="noopener">百度资深敏捷教练：深度解析持续交付之全面配置管理</a></p>
+<p>Ref. 4 <a href="https://www.hahack.com/work/enterprise-class-git-version-control-3/" target="_blank" rel="noopener">化繁为简的企业级 Git 管理实战（三）：分支管理策略</a></p>
+<h3 id="Git分支规范好工具"><a href="#Git分支规范好工具" class="headerlink" title="Git分支规范好工具"></a>Git分支规范好工具</h3><p>Ref. 5 <a href="http://km.oa.com/group/29185/articles/show/295984" target="_blank" rel="noopener">{内部}Git commit message和工作流规范</a></p>
+<p>Ref. 6 <a href="http://km.oa.com/group/502/articles/show/398772" target="_blank" rel="noopener">{内部}优雅提交git commit并强制关联tapd需求单</a></p>
+<p>Ref. 7 <a href="https://feflowjs.com/zh/guide/rule-git-commit.html" target="_blank" rel="noopener">Git Commit 规范 | Feflow</a></p>
+<p>Ref. 8  <a href="http://km.oa.com/group/33258/articles/show/401115" target="_blank" rel="noopener">{内部}使用Feflow在CI中检查项目Git规范</a></p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+    
+        <a href="/2020/05/04/Lecture0x10-SVM/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Lecture0x10_SVM</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Icy &copy; 2020 
+            <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a>
+            <br> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme - <a href="https://github.com/zthxxx/hexo-theme-Wikitten" target="_blank" rel="noopener">wikitten</a>
+            
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+            
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Icy&#39;s wiki</title>
+  
+  <subtitle>Life goes on, learning goes on</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="icyhh.xyz/"/>
+  <updated>2020-09-23T08:41:04.955Z</updated>
+  <id>icyhh.xyz/</id>
+  
+  <author>
+    <name>Icy</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>关于持续交付中Git分支管理的思考</title>
+    <link href="icyhh.xyz/2020/09/23/GitBranch-management/"/>
+    <id>icyhh.xyz/2020/09/23/GitBranch-management/</id>
+    <published>2020-09-22T23:36:58.000Z</published>
+    <updated>2020-09-23T08:41:04.955Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>Aim at always writing production-ready code.</p></blockquote><h1 id="一、背景"><a href="#一、背景" class="headerlink" title="一、背景"></a>一、背景</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 提升研发效率（EP， Engineering Productivity），建立CI/CD体系，让持续自动化和持续监控贯穿于应用的整个生命周期已经成为有技术追求的攻城狮们的共识。<br><img src="http://myimg.icyhh.xyz/branch_management/1-0.png" alt="CI/CD"><br>&nbsp; &nbsp; &nbsp; &nbsp; 持续交付是对整个软件交付模式的变革，涉及到的内容非常多、非常广，在这个模型中大概有二十多个关键点。根据[EPC（Engineering Productivity Certification） 1.0]的要求，需要覆盖到的有以下12个维度：</p><pre><code>0、需求协作管理    1、配置管理    2、制品库管理    3、分支管理    4、代码质量管理    5、测试管理    6、持续集成管理    7、自动化测试    8、开发测试与测试环境管理    9、发布    10、架构    11、数据觉察</code></pre><p>&nbsp; &nbsp; &nbsp; &nbsp; 虽然距离这些概念的提出已经有段时间了，对相关实践如何落地，大家大多处于探索、转变的阶段。经过这段时间的宅家分析与痛点沟通之后，我整理了一些想法，针对模型中的「分支管理」这一维度聚焦来谈谈。</p><h1 id="二、现状分析"><a href="#二、现状分析" class="headerlink" title="二、现状分析"></a>二、现状分析</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 我们所对接的业务方产品形态十分多样，从移动端iOS、Android，到微信小程序、H5页面，再到PC web等等，每个开发团队都在历史的长河中形成了各自不同的开发习惯和分支管理策略。</p><p>&nbsp; &nbsp; &nbsp; &nbsp; 以其中一个典型的项目为例，我调用了开放API简单分析了一下项目（已脱敏）当前的分支状况。</p><h2 id="分支生存周期统计"><a href="#分支生存周期统计" class="headerlink" title="分支生存周期统计"></a>分支生存周期统计</h2><h3 id="壹"><a href="#壹" class="headerlink" title="壹"></a>壹</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 首先我拉取了项目中所有分支的信息，简单画出它们从被创建（begin_time）到销毁（delete_time）总共存在了多长时间；如果还未销毁，就计算到今天为止。<br><img src="http://myimg.icyhh.xyz/branch_management/2-0.png" alt="begin2delete"></p><ul><li>虽然是新建不久的项目，但是分支已经有182个，其中有五个存在超过了100天。还有31%的分支超过了一个月。</li></ul><p><img src="http://myimg.icyhh.xyz/branch_management/2-1.png" alt="begin2delete_cal"></p><ul><li>说不定只是因为<strong>没有约定好删除分支的规范</strong>，而非真的有3成的需求开发时间超过一个月呢？</li></ul><h3 id="贰"><a href="#贰" class="headerlink" title="贰"></a>贰</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 所以假设<strong>不再有提交的分支其实是可以被废弃的</strong>。我又计算了一下分支从被创建（begin_time）到销毁（last_push_time）总共存在了多长时间。</p><p><img src="http://myimg.icyhh.xyz/branch_management/2-3.png" alt="begin2last_push_cal"></p><ul><li>虽然分支的使用时间的确是缩短了一些，可是只有40%的分支存在天数小于一周，剩下的长周期分支中依然有2成<strong>存在时间大于一个月</strong>。</li></ul><h3 id="叁"><a href="#叁" class="headerlink" title="叁"></a>叁</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 接下来再仔细看看这些「超长周期」的分支是什么情况。</p><p><img src="http://myimg.icyhh.xyz/branch_management/2-4-good.png" alt="long_time"></p><ul><li>在这个项目中，tiyan分支是作为类似发布分支的存在，master分支退居二线做开发使用，而test分支存放的是<strong>隔离开的单元测试和接口测试</strong>等等代码；后续存在了超过五十天的大部分是<strong>个人使用</strong>的bugfix分支。</li><li>那么问题来了。诸位看官可以思考一下 ① 测试代码不是同源同管理会有什么弊端 ② 长期存在多个分支、没有限制更新与合入时间会有什么弊端。</li></ul><h3 id="肆"><a href="#肆" class="headerlink" title="肆"></a>肆</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 大舒一口气，从分支角度看，至少我们的需求大部分并不是真的要开发数月才能上线，而是有机会做到小步快跑的？那么「存在周期中等长度」的分支又是什么情况呢。<br><img src="http://myimg.icyhh.xyz/branch_management/2-5.png" alt="middle_time"></p><ul><li>开发周期大于10天的需求依然不少，是否因为<strong>需求拆解</strong>不够小？或是<strong>开发框架组件化</strong>解耦得不够细？还是<strong>自动化测试</strong>的基建不够好呢？</li><li>除此之外还暴露出了另一个问题，分支的<strong>命名格式</strong>也太多样了吧。特别是经历过<strong>项目交接</strong>之后，不同团队中的不同个人都以各自的习惯提交？更不用说<strong>git commit的规范</strong>了，不方便回溯。</li></ul><h3 id="伍"><a href="#伍" class="headerlink" title="伍"></a>伍</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 存在周期长的分支问题暴露了这么多，最后剩下的「较短周期」的分支应该总没问题了吧？</p><p><img src="http://myimg.icyhh.xyz/branch_management/2-6.png" alt="short_time"></p><ul><li>通过分支名统计了一下存在天数在十天以下的分支的用处，除了<strong>命名不规范</strong>没有被我统计到的以外，用于fix作用的分支与feature分支各占一半，比较符合预期。</li></ul><h1 id="三、分支管理策略"><a href="#三、分支管理策略" class="headerlink" title="三、分支管理策略"></a>三、分支管理策略</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 经过上述的简单统计后，大家可能只是对该案例项目的分支之多、生存周期之长有深刻印象。那么在<strong>EPC标准</strong>中，对于分支管理道理有什么要求，在《持续交付2.0》中对于分支管理又有什么建议呢。</p><h2 id="3-1分支管理-EPC等级"><a href="#3-1分支管理-EPC等级" class="headerlink" title="3.1分支管理 - EPC等级"></a>3.1分支管理 - EPC等级</h2><p><img src="http://myimg.icyhh.xyz/branch_management/3-0-cut.png" alt="EPC"><br>&nbsp; &nbsp; &nbsp; &nbsp; 将[EPC 1.0]要求列出来后可以发现，在分支管理这个维度上，最终目标（Level 4）倒也算清晰简洁；除了要求分支要统一的命名规范外，量化指标就俩： </p><p>*<em>1. 分支存在的周期要短，80%的分支&lt;=2天， *</em></p><p><strong>2. 每次提交的内容要少，80%的提交 &lt; 200行代码</strong>（除客户端UI的布局文件和相关配置文件外）。</p><p>&nbsp; &nbsp; &nbsp; &nbsp; 当然，要在业务需求的开发过程中实现这两点目标，却不是一件容易的事情。</p><h2 id="3-2持续交付-分支管理模式"><a href="#3-2持续交付-分支管理模式" class="headerlink" title="3.2持续交付 - 分支管理模式"></a>3.2持续交付 - 分支管理模式</h2><p>&nbsp; &nbsp; &nbsp; &nbsp; 除了上述提及的两个分数要求外，大家应该也注意到了「分支开发，主干集成」的模式，悄悄地转变为了「主干开发，分支集成」的模式。<br>&nbsp; &nbsp; &nbsp; &nbsp; 而最理想化的状态竟是「主干开发，主干集成」。一开始看到这个理念我也很不解，一旦抛弃了分支的存在，强大如<a href="https://www.runoob.com/git/git-branch.html" target="_blank" rel="noopener">Git所拥有的必杀技</a>不就被禁足，一日被打回原型，与其他版本控制系统无异了吗？</p><p><img src="http://myimg.icyhh.xyz/branch_management/3-1.png" alt="git branch"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 且慢，<strong>这个「主干开发，主干集成」的理想国故事，还要从「主干开发，主干集成」的伊甸园开始说起。</strong></p><h4 id="3-2-1-初级「主干开发，主干集成」"><a href="#3-2-1-初级「主干开发，主干集成」" class="headerlink" title="3.2.1 初级「主干开发，主干集成」"></a>3.2.1 初级「主干开发，主干集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-21a.png" alt="321-a"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 摘录自乔老师在《持续集成2.0》中的描述。很好理解，其实个人开发或是2、3个人的小团队，需求不多时间不紧时，往往大家就是这样直接在master上修改，git提供的就是纯粹的代码备份服务。</p><p><img src="http://myimg.icyhh.xyz/branch_management/3-21b.png" alt="321-b"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 如果master代码处于长期不可用状态，只有等到所有功能开发完后才进行联调和集成测试，这就是「低频交付」的模式。</p><h4 id="3-2-2-「分支开发，主干集成」"><a href="#3-2-2-「分支开发，主干集成」" class="headerlink" title="3.2.2 「分支开发，主干集成」"></a>3.2.2 「分支开发，主干集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-22a.png" alt="322-a特性分支模式"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 当一个发布周期中的需求逐渐多了起来，需要合作的开发同学越来越多，新老同学的技术水平参差不齐的时候，就会发现Git的分支模型非常稳妥地提供了一种并行开发的解决方案，安全有保障、协作无干扰，这也是「特性分支模式」为什么备受青睐，广为业务团队所接受的原因（之一）。<br><img src="http://myimg.icyhh.xyz/branch_management/3-22b.png" alt="322-b"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 若是更大规模的团队（40人以上）共同开发一款产品，就更倾向于运用如上的分支开发模式。</p><p><img src="http://myimg.icyhh.xyz/branch_management/3-22c.png" alt="322-c"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 总的来说这个模式挺好的，唯一的弊端可能出现在合并的时候，一旦多个需求的修改有冲突，就会比较费神。<br>&nbsp; &nbsp; &nbsp; &nbsp; 若要成功使用这种模式，其关键点在于：</p><p>*<em>1. 让主干尽可能一直保持着在可发布状态； *</em></p><p>*<em>2. 每个分支的生命周期尽可能短； *</em></p><p>*<em>3. 主干代码尽早与分支同步； *</em></p><p><strong>4. 一切以主干代码为准，尽可能不要在各特性分支之间合并代码。</strong></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 但是分支开发模式，其实从本质上就是与持续集成的理念相互冲突的。持续集成是希望每次修改都尽早的提交到主干，主干总是处于最完整和最新的可用状态，充分验证后就可以用它来进行生产部署。而使用分支开发模式时，由于无法及时合并到主干，那么<strong>时间越长与主干差别越大，风险就越高，最终合并的时候就越痛苦</strong>。所以持续交付不推荐使用分支开发的模式[Ref. 3]。</p><h4 id="3-2-3-「主干开发，分支集成」"><a href="#3-2-3-「主干开发，分支集成」" class="headerlink" title="3.2.3 「主干开发，分支集成」"></a>3.2.3 「主干开发，分支集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-23a.png" alt="323-a"><br>&nbsp; &nbsp; &nbsp; &nbsp; 来到发布前的集成测试节点了，功能已经全部开发完毕，通常这时候客户端团队就会从代码中拉出「发布」分支。</p><p><img src="http://myimg.icyhh.xyz/branch_management/3-23b.png" alt="323-b"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 模型中所示的“质量打磨周期”（Branch Stabilization Time）越短，说明主干质量越好，当打磨周期极短时，就可以转换到高频的「主干开发，主干集成」模式。</p><p><img src="http://myimg.icyhh.xyz/branch_management/3-23c.png" alt="323-c"></p><h4 id="3-2-4-高级「主干开发，主干集成」"><a href="#3-2-4-高级「主干开发，主干集成」" class="headerlink" title="3.2.4 高级「主干开发，主干集成」"></a>3.2.4 高级「主干开发，主干集成」</h4><p><img src="http://myimg.icyhh.xyz/branch_management/3-21a.png" alt="321-a"></p><p>&nbsp; &nbsp; &nbsp; &nbsp; 是的，与3.2.1是同一张图，但是看到这里，相信大家应当对为何「主干开发，主干集成」是最低级的模式同时又是最高级的模式有所理解了。相比于「低频交付」的状态，「高频交付」状态下对代码质量的要求相当高，几乎是落子无bug的境界（笑）。<br>&nbsp; &nbsp; &nbsp; &nbsp; 需要进行版本控制的<strong>不仅是源代码</strong>，还有测试代码、数据库脚本、构建和部署脚本、依赖的库文件等，并且对构建产物的版本控制也同样重要。只有这些内容都纳入版本控制了，才能够确保所有的开发、测试、运维活动能够正常开展，系统能够被完整的搭建。持续交付建议的方式是频繁的提交代码，并且最好工作在主干上，这样一来<strong>修改对所有项目成员都快速可见</strong>，然后通过持续集成的机制，对修改触发快速的自动化验证和反馈，再往后如果能通过各种维度的验证测试，最终将成为潜在可发布和部署到生产环境的中版本[Ref. 3]。<br>&nbsp; &nbsp; &nbsp; &nbsp; 深入了解持续交付中对于分支管理的要求或者说期许之后，希望没有打击到大家的信心 / 希望反而能<strong>激起大家的技术追求</strong>。那么下一篇章就来谈谈一些近期搜刮到的/实用的/接地气的辅助方案了。</p><h1 id="四、细节建议方案"><a href="#四、细节建议方案" class="headerlink" title="四、细节建议方案"></a>四、细节建议方案</h1><p>&nbsp; &nbsp; &nbsp; &nbsp;个人认为， 上述提到的向「主干开发，主干集成」靠拢的模式思路更适用于<strong>发布频率固定且快、质量要求高</strong>的处于快速生长期的客户端（e.g. iOS、Android）/类客户端（e.g. 小程序）产品。不同的产品形态、不同的产品周期还是要因地制宜地选择适合当前发展状态的分支管理模式。比如对于嵌入在APP不同位置的H5页面，因为相互独立故而可以选择建立分别的仓库直接采用主干开发的方式。<br>&nbsp; &nbsp; &nbsp; &nbsp;有些场景下，迫不得已要采用分支开发的模式，比如并行需求太多且相互干扰，或者在需求开发的同时有大块的重构工作要做，或者针对特定的用户开发特殊的功能，以及需要进行与主线无关的试验等等。这时拉出分支其实意味着已经在持续集成/持续交付上做出了妥协，那么我们建议至少要使用一些折中的方案[Ref. 3]：</p><ol><li><strong>尽量缩短分支的周期，最长也不要超过迭代周期；</strong></li><li><strong>每个分支上运行单独的测试流水线，保证质量。虽然这种方式浪费资源，而且其实也没进行”真正的“集成；</strong></li><li><strong>分支只与主干合并代码，分支彼此之间尽量不做合并；</strong></li><li><strong>分支定期合并主干上的变更；</strong></li></ol><h2 id="【重点】针对问题项目的分支管理改进"><a href="#【重点】针对问题项目的分支管理改进" class="headerlink" title="【重点】针对问题项目的分支管理改进"></a>【重点】针对问题项目的分支管理改进</h2><p>&nbsp; &nbsp; &nbsp; &nbsp;针对第二节中分析的典型项目，我想可以有如下的改进方式：</p><p><img src="http://myimg.icyhh.xyz/branch_management/4-0.png" alt="4-0"></p><ol><li>按照上图所示的分支模式进行管理，除了主干与发布分支以外，其他不必要的分支均删去，减少与主干产生大差异的机会；</li><li><strong>测试代码</strong>、数据库脚本、构建和部署脚本、依赖的库文件等等合入主干与源代码同源管理；</li><li>分支与需求绑定起来，使得每一次的修改有据可循（可参考4.1）；</li><li>约定特性分支的命名规范（比如feat_20200229_market，表示该特性分支最多存在到二月29日就要删去，功能是market），可以通过插件约束不规范分支的提交（可参考4.3）；</li><li>遵循git commit的提交信息规范，限制不合规范的messages的提交（可参考4.2）；</li><li>除非特殊需要，所有特性分支的存在周期都尽量压缩到五天以内；持续暗示自己分支不过周末。</li></ol><h2 id="4-1-分支与需求单"><a href="#4-1-分支与需求单" class="headerlink" title="4.1 分支与需求单"></a>4.1 分支与需求单</h2><p>&nbsp; &nbsp; &nbsp; &nbsp; 在3.2.2的模式中，每一个特性分支的创建都是为需求服务的。要想达到每个分支都在很短时间内消失的目标，不可否认前提条件是<strong>产品对需求的拆解</strong>和<strong>开发对代码的解耦</strong>都具备很高的能力，这是值得另开篇章阐述的话题，此处先留个#href的坑。<br>&nbsp; &nbsp; &nbsp; &nbsp; 为了解决当前分支凌乱的问题，有一种办法是在需求单<strong>转入开发中时自动创建分支</strong>，git commit时提交关键字<strong>与需求ID绑定</strong>起来，不仅可以追溯每一次代码的变更都为了达成什么目的，划分模块责任人，更可以在git push的同时<strong>一键转单评论</strong>，繁琐的流程和鼠标点点点操作通通不存在。<br>&nbsp; &nbsp; &nbsp; &nbsp;  参考《TAPD（腾讯敏捷产品研发平台）-工蜂Git关联新特性》，只需三步，轻松上手。</p><ol><li>TAPD项目下启用「源码」应用，应用设置中关联相应的GIT仓库。</li><li>需求单与GIT分支关联。</li><li>Smart Commit关键字提交时触发状态流转。</li></ol><p>效果示例：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m <span class="string">"fix: test --story=857210425 TAPD vs GIT #finish"</span></span><br><span class="line">$ git push</span><br></pre></td></tr></table></figure><p><img src="http://myimg.icyhh.xyz/branch_management/4-1-mas.png" alt="4-1">   </p><p>&nbsp; &nbsp; &nbsp; &nbsp; 分支关联需求单，commit关联需求提测 / bug解决，状态流转一步到位。</p><h2 id="4-2-代码提交规范"><a href="#4-2-代码提交规范" class="headerlink" title="4.2. 代码提交规范"></a>4.2. 代码提交规范</h2><p>&nbsp; &nbsp; &nbsp; &nbsp;编写规范良好的commit messages的优点无需赘言。不仅提高后续code review的效率，帮助团队成员清晰地了解到每一次提交修改了什么特性，也方便了版本日志的生成。<br>&nbsp; &nbsp; &nbsp; &nbsp;业界最常用的<a href="https://www.ruanyifeng.com/blog/2016/01/commit_message_change_log.html" target="_blank" rel="noopener">Angular规范</a>如下（只展示Header要求）：</p><pre><code>&lt;type&gt;[optional scope]: &lt;description&gt;</code></pre><p>&nbsp; &nbsp; &nbsp; &nbsp; Header部分只有一行，其中<code>&lt;type&gt;</code>用于说明 commit 的类别，只允许使用下面7个标识：</p><pre><code>feat：新功能（feature）fix：修补bugdocs：文档（documentation）style： 格式（不影响代码运行的变动）refactor：重构（即不是新增功能，也不是修改bug的代码变动）test：增加测试chore：构建过程或辅助工具的变动</code></pre><p>&nbsp; &nbsp; &nbsp; &nbsp; <code>&lt;scope&gt;</code>用于说明 commit 影响的范围，比如数据层、控制层、视图层等等，视项目不同而不同。是可选项。<br>&nbsp; &nbsp; &nbsp; &nbsp; <code>&lt;description&gt;</code>是 commit 目的的简短描述，不超过50个字符。</p><h2 id="4-3-辅助工具"><a href="#4-3-辅助工具" class="headerlink" title="4.3. 辅助工具"></a>4.3. 辅助工具</h2><p>&nbsp; &nbsp; &nbsp; &nbsp; 无论是何种规范的制定，最终目的都是服务于研发流程的提效，如果它的存在阻碍了开发的丝滑进行，那它就不是一个好的规范。<br>&nbsp; &nbsp; &nbsp; &nbsp; 所以我们需要一些自动化的提示和约束，来方便标准化规范的落实。</p><h3 id="4-3-1-分支命名规范"><a href="#4-3-1-分支命名规范" class="headerlink" title="4.3.1 分支命名规范"></a>4.3.1 分支命名规范</h3><p>&nbsp; &nbsp; &nbsp; &nbsp; 参考《Feflow在CI中检查项目Git规范》提供的前端方案，feflow-plugin-check插件（后续可能会对外开源：<a href="https://github.com/iv-web/feflow）" target="_blank" rel="noopener">https://github.com/iv-web/feflow）</a>:</p><pre><code>* 分支版本命名规则：分支类型_分支发布时间_分支功能。比如：feature_20170401_fairy_flower* 分支类型包括：feature、 bugfix、refactor三种类型，即新功能开发、bug修复和代码重构* 时间使用年月日进行命名，不足2位补0* 分支功能命名使用snake case命名法，即下划线命名。</code></pre><p><strong>效果示例：</strong><br><img src="http://myimg.icyhh.xyz/branch_management/4-2-mas.png" alt="4-3-1"></p><h3 id="4-3-2-关联tapd并规范commit"><a href="#4-3-2-关联tapd并规范commit" class="headerlink" title="4.3.2 关联tapd并规范commit"></a>4.3.2 关联tapd并规范commit</h3><p>参考《优雅提交git commit并强制关联tapd需求单》提供的方案（后续可能会对外开源），只需两步：<br>（1）添加package.json 和 commitlint.config.js 文件。<br>（2）执行tnpm install</p><p><strong>效果示例：</strong><br>a) 没有输入正确的tapd关联<br><img src="http://myimg.icyhh.xyz/branch_management/4-4a.png" alt="没有输入正确的tapd关联"><br>b) 没有输入正确的Angular规范<br><img src="http://myimg.icyhh.xyz/branch_management/4-4b.png" alt="没有输入正确的Angular规范"><br>c) 符合要求的commit message<br><img src="http://myimg.icyhh.xyz/branch_management/4-4c.png" alt="符合要求的commit message"></p><h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&nbsp; &nbsp; &nbsp; &nbsp; 良好的分支管理只是实现持续交付持续部署的其中一个必不可少的环节，要让DevOps更丝滑，研发流程效率更高，还需要产品-开发-测试同学更加专业化、更加规范化地一同努力。</p><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h3 id="持续交付中的分支管理"><a href="#持续交付中的分支管理" class="headerlink" title="持续交付中的分支管理"></a>持续交付中的分支管理</h3><p>Ref. 1 <a href="http://www.read678.com/JdBook/index/6589" target="_blank" rel="noopener">乔梁-《持续交付2.0业务引领的DevOps精要》</a></p><p>Ref. 2 <a href="http://km.oa.com/group/11831/articles/show/299416" target="_blank" rel="noopener">{内部}持续交付体系设计与实践 - 工程效率提升之路</a></p><p>Ref. 3 <a href="https://mp.weixin.qq.com/s?__biz=MzI4NTA1MDEwNg==&mid=2650757465&idx=1&sn=ec6c9c4aee13deaecf48619ea0c5cd95&chksm=f3f9ecccc48e65dac50638240f9ee6d6af1648b00d8e6baa84f446075809defed0f74e8ce0da&mpshare=1&scene=23&srcid=0211hJxP8eYjCTcPmENhn0Uy%23rd" target="_blank" rel="noopener">百度资深敏捷教练：深度解析持续交付之全面配置管理</a></p><p>Ref. 4 <a href="https://www.hahack.com/work/enterprise-class-git-version-control-3/" target="_blank" rel="noopener">化繁为简的企业级 Git 管理实战（三）：分支管理策略</a></p><h3 id="Git分支规范好工具"><a href="#Git分支规范好工具" class="headerlink" title="Git分支规范好工具"></a>Git分支规范好工具</h3><p>Ref. 5 <a href="http://km.oa.com/group/29185/articles/show/295984" target="_blank" rel="noopener">{内部}Git commit message和工作流规范</a></p><p>Ref. 6 <a href="http://km.oa.com/group/502/articles/show/398772" target="_blank" rel="noopener">{内部}优雅提交git commit并强制关联tapd需求单</a></p><p>Ref. 7 <a href="https://feflowjs.com/zh/guide/rule-git-commit.html" target="_blank" rel="noopener">Git Commit 规范 | Feflow</a></p><p>Ref. 8  <a href="http://km.oa.com/group/33258/articles/show/401115" target="_blank" rel="noopener">{内部}使用Feflow在CI中检查项目Git规范</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;Aim at always writing production-ready code.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;一、背景&quot;&gt;&lt;a href=&quot;#一、背景&quot; class=&quot;headerlink&quot; title=&quot;一、背景&quot;
+      
+    
+    </summary>
+    
+    
+      <category term="DevOps" scheme="icyhh.xyz/categories/DevOps/"/>
+    
+    
+      <category term="DevOps" scheme="icyhh.xyz/tags/DevOps/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x10_SVM</title>
+    <link href="icyhh.xyz/2020/05/04/Lecture0x10-SVM/"/>
+    <id>icyhh.xyz/2020/05/04/Lecture0x10-SVM/</id>
+    <published>2020-05-04T02:45:44.000Z</published>
+    <updated>2020-09-23T08:41:04.957Z</updated>
+    
+    <content type="html"><![CDATA[<p>继续发一个身份卡。</p><table><thead><tr><th>名称</th><th>中文</th><th>分类模型</th><th>回归模型</th><th>关注参数</th><th>适用场景</th><th>必备技巧</th></tr></thead><tbody><tr><td>Support Vector Machine</td><td>z</td><td>Yes</td><td>Yes</td><td>核函数，误差C。</td><td>特征维度小，非线性可分。</td><td>特征归一化。</td></tr></tbody></table><blockquote><p> 本周持续dancing  &amp; GRE learning，本文还有补充空间~</p></blockquote><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484477&idx=1&sn=226e099c1951b6c11b1e7fb6b7a092a3&chksm=eb932d8bdce4a49d0595b6c642fc2e5969fdc05a185f97a39cc1a896e24d56d8703541a28f9c&scene=21#wechat_redirect" target="_blank" rel="noopener">入门支持向量机1：图文详解SVM原理与模型数学推导</a></p><p>Ref. 2 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484512&idx=1&sn=7a6b75f312e92bbdecafdedf979ed929&chksm=eb932dd6dce4a4c0ae4ea087878ec7a5f5ccc0724a85aa93daff3d08c33ecf86a3d809e51a82&scene=21#wechat_redirect" target="_blank" rel="noopener">入门支持向量机2：软间隔与sklearn中的SVM</a></p><p>Ref. 3 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484546&idx=1&sn=33c6c5cb698b8835b2ee57dd8ea7c221&chksm=eb932d34dce4a4221f40f3daa26863a5fd05dcbcf74738d5423316c643e3ff930904d1a33fca&scene=21#wechat_redirect" target="_blank" rel="noopener">入门支持向量机3：巧妙的Kernel Trick</a></p><p>Ref. 4 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484572&idx=1&sn=fd6e86ce45167286fb6ba4089b7b29dd&chksm=eb932d2adce4a43c44d26e79d4968f395d7cc22a31d84aef7944b227e1843b3f0722a5e894ed&scene=21#wechat_redirect" target="_blank" rel="noopener">入门支持向量机4：多项式核函数与RBF核函数代码实现及调参</a></p><p>Ref. 5 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484596&idx=1&sn=7e93eb135d66c86238ccf516f0ae65ec&chksm=eb932d02dce4a41447a9cb34d627f435c760a5deb125a40d4c2a77f99e2187194d6bfbda4cbc&scene=21#wechat_redirect" target="_blank" rel="noopener">入门支持向量机5：回归问题及系列回顾总结</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;继续发一个身份卡。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;中文&lt;/th&gt;
+&lt;th&gt;分类模型&lt;/th&gt;
+&lt;th&gt;回归模型&lt;/th&gt;
+&lt;th&gt;关注参数&lt;/th&gt;
+&lt;th&gt;适用场景&lt;/th&gt;
+&lt;th&gt;必备技巧&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/
+      
+    
+    </summary>
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x09-PCA</title>
+    <link href="icyhh.xyz/2020/04/26/Lecture0x09-PCA/"/>
+    <id>icyhh.xyz/2020/04/26/Lecture0x09-PCA/</id>
+    <published>2020-04-26T13:19:50.000Z</published>
+    <updated>2020-09-23T08:41:04.957Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p> 本周补班+GRE，PCA嘛再说啦~</p></blockquote><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484343&idx=1&sn=6a7dd3b9979b306265da0747f15064e2&chksm=eb932a01dce4a317c6c344dde4b4e30c99e46fd06416508997043d17d2b4899a649b7cc570c5&scene=21#wechat_redirect" target="_blank" rel="noopener">数据降维1：主成分分析法思想及原理</a></p><p>Ref. 2 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484331&idx=1&sn=8e7b882d2e14e3c32d2a27669962b44b&chksm=eb932a1ddce4a30b65d82dcaf9b4f2967f14cd9f2bc532f9c8e186d5dd4e9ad3a5dbfa4027c6&scene=21#wechat_redirect" target="_blank" rel="noopener">数据降维2：PCA算法的实现及使用</a></p><p>Ref. 3 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484370&idx=1&sn=fe01e5057f94c248ce69ef8766bffcb8&chksm=eb932a64dce4a3729c046346aa71a5ba2285e2f5237fe710bac805312db36379609fbd21430a&scene=21#wechat_redirect" target="_blank" rel="noopener">数据降维3：降维映射及PCA的实现与使用</a></p><p>Ref. 4 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484382&idx=1&sn=d8d488b01935ca5e7dc05a9ee302cf03&chksm=eb932a68dce4a37e5ee4b576b56daba6bc2deee243a9a7c3e87ca56f5f602e00c6eb676a5f69&scene=21#wechat_redirect" target="_blank" rel="noopener">数据降维之应用：降噪&amp;人脸识别</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt; 本周补班+GRE，PCA嘛再说啦~&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;附录&quot;&gt;&lt;a href=&quot;#附录&quot; class=&quot;headerlink&quot; title=&quot;附录&quot;&gt;&lt;/a&gt;附录&lt;/h1&gt;&lt;p&gt;Ref. 1 &lt;a href=&quot;h
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x08_DecisionTree</title>
+    <link href="icyhh.xyz/2020/04/19/Lecture0x08-DecisionTree/"/>
+    <id>icyhh.xyz/2020/04/19/Lecture0x08-DecisionTree/</id>
+    <published>2020-04-19T15:37:32.000Z</published>
+    <updated>2020-09-23T08:41:04.957Z</updated>
+    
+    <content type="html"><![CDATA[<p>发一个身份卡。</p><table><thead><tr><th>名称</th><th>中文</th><th>分类模型</th><th>回归模型</th><th>关注参数</th><th>适用场景</th><th>必备技巧</th></tr></thead><tbody><tr><td>Decision Tree</td><td>决策树</td><td>Yes</td><td>Yes</td><td>划分阈值的选择</td><td>要求有较好的解释性的场景。</td><td>特征离散化、剪枝。</td></tr></tbody></table><blockquote><p> 本周努力学习GRE，本文还有补充空间~</p></blockquote><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484178&idx=1&sn=1af90ba53ee3c1036ca94be9180e4c81&chksm=eb932aa4dce4a3b23aaed46d779abbc00917a55ac71cf177737c462ef9a02732e087049d132a&scene=21#wechat_redirect" target="_blank" rel="noopener">决策树1：初识决策树</a></p><p>Ref. 2 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484195&idx=1&sn=054651159e08f74c85f1fc1fab8a0f25&chksm=eb932a95dce4a383870f5385e9e926af022ecb5f7c9b827c2fb4c72af4f66a1133b5a88d3cb2&scene=21#wechat_redirect" target="_blank" rel="noopener">决策树2: 特征选择中的相关概念</a></p><p>Ref. 3 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484204&idx=1&sn=372d3ee90802d15347445f91056fe6bc&chksm=eb932a9adce4a38c9750a2cf6ca3382056b66099476223da02016e964ef711b97c4798ba9e58&scene=21#wechat_redirect" target="_blank" rel="noopener">决策树3: 特征选择之寻找最优划分</a></p><p>Ref. 4 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484212&idx=1&sn=aaabacf77db62a2b78fbef5ad034e354&chksm=eb932a82dce4a394fbf447fdd01b167565f04ddf85db5ef5e969bc0c75bd0dbf67b36236d64b&scene=21#wechat_redirect" target="_blank" rel="noopener">决策树4：构建算法之ID3、C4.5</a></p><p>Ref. 5 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484241&idx=1&sn=fa915fb55d98b38c54674a58f18ba921&chksm=eb932ae7dce4a3f16423bc2e61ca5f819b482e438df3025bcac6dd9d9c07ccf6424fc79463a9&scene=21#wechat_redirect" target="_blank" rel="noopener">决策树5：剪枝与sklearn中的决策树</a></p><p>Ref. 6 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484269&idx=1&sn=a0c39116207b0d299c48764640d4c582&chksm=eb932adbdce4a3cd0a962b735ffb3fe5bad1739259ced35f3d1e03b8eee05db5cd9fb025395c&scene=21#wechat_redirect" target="_blank" rel="noopener">决策树6：分类与回归树CART</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;发一个身份卡。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;中文&lt;/th&gt;
+&lt;th&gt;分类模型&lt;/th&gt;
+&lt;th&gt;回归模型&lt;/th&gt;
+&lt;th&gt;关注参数&lt;/th&gt;
+&lt;th&gt;适用场景&lt;/th&gt;
+&lt;th&gt;必备技巧&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/th
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x07_LogisticRegression</title>
+    <link href="icyhh.xyz/2020/04/12/Lecture0x07-LogisticRegression/"/>
+    <id>icyhh.xyz/2020/04/12/Lecture0x07-LogisticRegression/</id>
+    <published>2020-04-12T10:50:42.000Z</published>
+    <updated>2020-09-23T08:41:04.957Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>本周努力学习data analysis，本文留白~</p></blockquote><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1<a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484074&idx=1&sn=25a66eedf3a9e7cb439e157309614f88&chksm=eb932b1cdce4a20a3ba127426fd1a406feb9cca75f1ae575ad4bbd9dd087b1d7a035aca570fa&scene=21#wechat_redirect" target="_blank" rel="noopener">《出场率No.1的逻辑回归算法，是怎样“炼成”的？》</a></p><p>Ref. 2<a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484100&idx=1&sn=50c9caf07c84135b467305685472f2cc&chksm=eb932b72dce4a264b29f18d427547b516c2d2e91f825a658da5d385144952fb6c26d54129c7a&scene=21#wechat_redirect" target="_blank" rel="noopener">《逻辑回归的本质及其损失函数的推导、求解》</a></p><p>Ref. 3<a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484105&idx=1&sn=7ad5725fc9a2bba86c96ff352924f19e&chksm=eb932b7fdce4a269b1d964081481632b52cd795bb04b0baacb23c99bf8f5789d7ef2e601c6f9&scene=21#wechat_redirect" target="_blank" rel="noopener">《逻辑回归代码实现与调用》</a></p><p>Ref. 4<a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484138&idx=1&sn=8bbc9f2a4c17a95ea0f11bb2714c38eb&chksm=eb932b5cdce4a24a056e1876903cf2eaab4a8ca0af72780a5e8dc3f4c9a2562f669366523217&scene=21#wechat_redirect" target="_blank" rel="noopener">《逻辑回归的决策边界及多项式》</a></p><p>Ref.5 <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484159&idx=1&sn=abc9a968a839383677d68de50d320581&chksm=eb932b49dce4a25fc86e5c6a924decb85852c009a006b0a70d0976d6658c5a8dcf3220ba1149&scene=21#wechat_redirect" target="_blank" rel="noopener">《sklearn中的逻辑回归中及正则化》</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;本周努力学习data analysis，本文留白~&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;附录&quot;&gt;&lt;a href=&quot;#附录&quot; class=&quot;headerlink&quot; title=&quot;附录&quot;&gt;&lt;/a&gt;附录&lt;/h1&gt;&lt;p&gt;Ref. 1&lt;a h
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x06_pipeline</title>
+    <link href="icyhh.xyz/2020/04/06/Lecture0x06-pipeline/"/>
+    <id>icyhh.xyz/2020/04/06/Lecture0x06-pipeline/</id>
+    <published>2020-04-06T04:14:31.000Z</published>
+    <updated>2020-09-23T08:41:04.956Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>本周努力刷leetcode，本文留白~</p></blockquote><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 Japson / <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484400&idx=1&sn=3ca55d15e7ccd2d6234a5cf5c7abff73&chksm=eb932a46dce4a3509cfab261d80748b2a6eab43d09142a9838c7a4b0d9fb87772673d5494f0d&scene=21#wechat_redirect" target="_blank" rel="noopener">《浅析多项式回归与sklearn中的Pipeline》</a></p><p>Ref.2  Japson / <a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484409&idx=1&sn=740b2a7b4201d7d2e0186e590e8e4a30&chksm=eb932a4fdce4a3593542dc91dda56ca5c92a673b56013d18fc502963bf8ab3e4626f90ec83fa&scene=21#wechat_redirect" target="_blank" rel="noopener">《ML/DL重要基础概念：偏差和方差》</a></p><p>Ref.3  Japson /<a href="http://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247484437&idx=1&sn=40f4b448ed6b26b5e67690764a3f0cbb&chksm=eb932da3dce4a4b5820f1f8a6616edc08bd6700fc03055ed14a6eb4148d97c9fc299af94f3b1&scene=21#wechat_redirect" target="_blank" rel="noopener">《（理论+代码）模型正则化：L1正则、L2正则》</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;本周努力刷leetcode，本文留白~&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;附录&quot;&gt;&lt;a href=&quot;#附录&quot; class=&quot;headerlink&quot; title=&quot;附录&quot;&gt;&lt;/a&gt;附录&lt;/h1&gt;&lt;p&gt;Ref. 1 Japson / 
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x05_GradientDescent</title>
+    <link href="icyhh.xyz/2020/03/28/Lecture0x05-GradientDescent/"/>
+    <id>icyhh.xyz/2020/03/28/Lecture0x05-GradientDescent/</id>
+    <published>2020-03-28T09:41:07.000Z</published>
+    <updated>2020-09-23T08:41:04.956Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="从机器学习方法论说起"><a href="#从机器学习方法论说起" class="headerlink" title="从机器学习方法论说起"></a>从机器学习方法论说起</h1><h3 id="WHAT"><a href="#WHAT" class="headerlink" title="WHAT"></a>WHAT</h3><p>「机器学习」就是找到一种函数f(x)并进行优化， 完成预测、分类、生成等工作。</p><h3 id="HOW"><a href="#HOW" class="headerlink" title="HOW"></a>HOW</h3><p>第一步：定义一个函数集合（define a function set）<br>第二步：判断函数的好坏（goodness of a function）<br>第三步：选择最好的函数（pick the best one）</p><h3 id="HOW-3"><a href="#HOW-3" class="headerlink" title="HOW 3"></a>HOW 3</h3><p>pick the best one?<br>「梯度下降」是目前机器学习、深度学习解决最优化问题的算法中，最核心、应用最广的方法。</p><h1 id="梯度是什么"><a href="#梯度是什么" class="headerlink" title="梯度是什么"></a>梯度是什么</h1><p>多元函数的<strong>导数(derivative)</strong>就是<strong>梯度(gradient)</strong>，分别对每个变量进行微分。梯度是向量(有方向)，其维度与参数的维度一样。梯度指向误差值增加最快的方向。</p><p>对于<strong>损失函数L</strong>，$f(x_1, x_2)$，梯度为$\nabla L = (\frac{\partial L}{\partial x_1},\frac{\partial L}{\partial x_2})$</p><h1 id="为什么靠梯度下降"><a href="#为什么靠梯度下降" class="headerlink" title="为什么靠梯度下降"></a>为什么靠梯度下降</h1><p>从数学的角度出发，针对损失函数$L$，假设选取的初始点为$(a_0, b_0)$，将这个点稍微移动一点点，得到$(a_1, b_1)$。</p><p>移动一点点的增量 $\Delta L = L(a_1, b_1) - L(a_0, b_0) \approx \frac{\partial L}{\partial a}\Delta a + \frac{\partial L}{\partial b}\Delta b$  （代入了泰勒展开式）</p><p>如果令移动的距离$\Delta a$、$\Delta b$分别为$-\eta\frac{\partial L}{\partial a}$、$-\eta\frac{\partial L}{\partial b}$，其中规定$\eta &gt; 0$，则：</p><p> $\Delta L  \approx -\eta (\frac{\partial L}{\partial a})^2 + (\frac{\partial L}{\partial b})^2 \leqslant 0$ </p><p>我们如果按照<u>规定的移动距离公式</u>移动参数，那么损失函数的函数值始终是下降的，这样就达到了我们要求的“损失变小”的要求了。<strong>如果一直重复这种移动，则可以证明损失函数最终能够达到一个最小值。</strong></p><p>所以下一个点的迭代公式：</p><p>$(a_{k+1}, b_{b+1})=(a_{k}+\Delta a, b_{b}+\Delta b)) = (a_{k}-\eta\frac{\partial L}{\partial a}, b_{b}-\eta\frac{\partial L}{\partial b}))$</p><h2 id="为什么梯度要乘以一个负号"><a href="#为什么梯度要乘以一个负号" class="headerlink" title="为什么梯度要乘以一个负号"></a>为什么梯度要乘以一个负号</h2><p>梯度的方向就是损失函数值<strong>在此点上升最快的方向</strong>，是损失增大的区域；而我们要使损失最小，因此就要逆着梯度方向走，自然就是负的梯度的方向。</p><h2 id="关于参数-eta"><a href="#关于参数-eta" class="headerlink" title="关于参数$\eta$"></a>关于参数$\eta$</h2><p>我们已经知道，梯度对应的是下山的方向，而参数 对应的是步伐的长度。在学术上，我们称之为<strong>“学习率”(learning rate)</strong>，是模型训练时的一个很重要的超参数，<strong>能直接影响算法的正确性和效率</strong>：</p><ol><li>学习率$\eta$不能太大。从数学角度上来说，一阶泰勒公式只是一个近似的公式，只有在学习率很小，也就是$\Delta a$, $\Delta b$很小时才成立。直观上考虑，如果学习率太大，那么有可能会“迈过”最低点，从而发生“摇摆”的现象（不收敛），无法得到最低点。</li><li>学习率又不能太小。如果太小，会导致每次迭代时，参数几乎不变化，收敛学习速度变慢，使得算法的效率降低，需要很长时间才能达到最低点。</li></ol><h1 id="梯度下降算法的缺点"><a href="#梯度下降算法的缺点" class="headerlink" title="梯度下降算法的缺点"></a>梯度下降算法的缺点</h1><p>从理论上，它只能保证达到局部最低点，而非全局最低点。在很多复杂函数中有很多极小值点，我们使用梯度下降法只能得到局部最优解，而不能得到全局最优解。</p><p>对应的<strong>解决方案</strong>有：首先<strong>随机产生多个初始参数集</strong>，即多组$a_{0}$, $b_{0}$；然后<strong>分别对每个初始参数集使用梯度下降法</strong>，直到函数值收敛于某个值；最后从这些值中找出最小值，这个找到的最小值被当作函数的最小值。当然这种方式不一定能找到全局最优解，但是起码能找到较好的。</p><h1 id="如何实施梯度下降"><a href="#如何实施梯度下降" class="headerlink" title="如何实施梯度下降"></a>如何实施梯度下降</h1><p>//todo Ref. 2&amp;3</p><h1 id="优化梯度下降算法"><a href="#优化梯度下降算法" class="headerlink" title="优化梯度下降算法"></a>优化梯度下降算法</h1><table><thead><tr><th>名称</th><th>中文</th><th>特点</th><th>优缺点</th></tr></thead><tbody><tr><td>BGD (Batch Gradient Descent)</td><td>批量梯度下降法</td><td>通过对整个数据集的所有样本的计算来求解梯度的方向。</td><td>在数据量很大时需要计算很久</td></tr><tr><td>SGD (Stochastic Gradient Descent）</td><td>随机梯度下降法</td><td>每次迭代使用一个样本来对参数进行更新。虽然不是每次迭代得到的损失函数都向着全局最优方向，但是大的整体的方向是向全局最优解的。学习率$\eta$需要逐渐递减的。</td><td>相比于批量梯度，这样的方法更快。但随机梯度下降有着不可预知性。</td></tr><tr><td>SGDM (SGD with Momentum)</td><td></td><td>当前权值的改变会收到上一次权值的改变的影响，就像小球滚动时候一样，由于惯性，当前状态会受到上一个状态影响，这样可以加快速度。</td><td></td></tr><tr><td>AdaGrad (Adative Gradient Descent)</td><td>自适应梯度</td><td>核心思想是对于常见的数据给予比较小的学习率去调整参数，对于不常见的数据给予比较大的学习率调整参数。它可以自动调节学习率，但迭代次数多的时候，学习率也会下降。</td><td>加大小梯度方向的进步，自动调节学习率；但是时间太长的话，会造成步长太小，困在局部极值点。</td></tr><tr><td>RMSProp</td><td>均方差传播</td><td>基于权重梯度最近量级的均值为每一个参数适应性地保留学习率。这意味着算法在非稳态和在线问题上有很有优秀的性能。</td><td></td></tr><tr><td>Adam</td><td>它的名称来源于适应性矩估计（adaptive moment estimation）</td><td>AdaGrad通过计算梯度的一阶矩估计和二阶矩估计而为不同的参数设计独立的自适应性学习率。</td><td>同时获得了 AdaGrad 和 RMSProp 算法的优点。</td></tr></tbody></table><p>//to be continue.</p><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 Japson / <a href="https://mp.weixin.qq.com/s/44p8anqiiQV6XYGqH5u-Ug" target="_blank" rel="noopener">还不了解梯度下降法？看完这篇就懂了！</a></p><p>Ref.2  Japson /  <a href="https://mp.weixin.qq.com/s/nI9IBa4ccfg0xqyn0tbRPA" target="_blank" rel="noopener">手动实现梯度下降（可视化）</a></p><p>Ref.3  Japson / <a href="https://mp.weixin.qq.com/s/8gStYSSBvkXeuaX6Pp9qiQ" target="_blank" rel="noopener">线性回归中的梯度下降</a></p><p>Ref.4  Japson /<a href="https://mp.weixin.qq.com/s/OUslRwKGpS29gncsiyAPyg" target="_blank" rel="noopener">速度更快的随机梯度下降法</a></p><p>Ref.5  Japson /<a href="https://mp.weixin.qq.com/s/CL5GZKGHPaUf9MW2d08C2A" target="_blank" rel="noopener">梯度下降番外：非常有用的调试方式及总结</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h1 id=&quot;从机器学习方法论说起&quot;&gt;&lt;a href=&quot;#从机器学习方法论说起&quot; class=&quot;headerlink&quot; title=&quot;从机器学习方法论说起&quot;&gt;&lt;/a&gt;从机器学习方法论说起&lt;/h1&gt;&lt;h3 id=&quot;WHAT&quot;&gt;&lt;a href=&quot;#WHAT&quot; class=&quot;head
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x04_LinearRegression</title>
+    <link href="icyhh.xyz/2020/03/22/Lecture0x04-LinearRegression/"/>
+    <id>icyhh.xyz/2020/03/22/Lecture0x04-LinearRegression/</id>
+    <published>2020-03-21T16:21:13.000Z</published>
+    <updated>2020-09-23T08:41:04.956Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="线性回归"><a href="#线性回归" class="headerlink" title="线性回归"></a>线性回归</h1><p>发一个身份卡。</p><table><thead><tr><th>名称</th><th>中文</th><th>分类模型</th><th>回归模型</th><th>关注参数</th><th>适用场景</th><th>必备技巧</th></tr></thead><tbody><tr><td>Linear Regression</td><td>线性回归</td><td>No</td><td>Yes</td><td>L1、L2范数</td><td>维数低，每一维之间都没有共线性</td><td></td></tr></tbody></table><blockquote><p>本周忙昏，本文留白~</p></blockquote><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 Japson / <a href="https://mp.weixin.qq.com/s/qWO9zgKyntvyWfftpGqrHQ" target="_blank" rel="noopener">模型之母：简单线性回归&amp;最小二乘法</a> &amp; <a href="https://mp.weixin.qq.com/s/r9AT6FbWGVP3fORn3FeEvg" target="_blank" rel="noopener">特征工程系列：特征预处理（下）</a></p><p>Ref.2  Japson /  <a href="https://mp.weixin.qq.com/s/siFRKWLhGOGJCCMjzB7R7A" target="_blank" rel="noopener">模型之母：简单线性回归的代码实现</a></p><p>Ref.3 Japson / <a href="https://mp.weixin.qq.com/s/gJU4oJufOFNF_I3MO7gYlA" target="_blank" rel="noopener">模型之母：多元线性回归</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h1 id=&quot;线性回归&quot;&gt;&lt;a href=&quot;#线性回归&quot; class=&quot;headerlink&quot; title=&quot;线性回归&quot;&gt;&lt;/a&gt;线性回归&lt;/h1&gt;&lt;p&gt;发一个身份卡。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;中文&lt;/th&gt;
+&lt;th&gt;分
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x03_feature engineering</title>
+    <link href="icyhh.xyz/2020/03/11/Lecture0x03-feature/"/>
+    <id>icyhh.xyz/2020/03/11/Lecture0x03-feature/</id>
+    <published>2020-03-11T11:25:33.000Z</published>
+    <updated>2020-09-23T08:41:04.956Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="数据预处理与特征工程"><a href="#数据预处理与特征工程" class="headerlink" title="数据预处理与特征工程"></a>数据预处理与特征工程</h1><ul><li>思维导图直达：<a href="https://mubu.com/doc/5rWv4i8HggF" target="_blank" rel="noopener">https://mubu.com/doc/5rWv4i8HggF</a></li></ul><h2 id="Data-PreProcessing（数据预处理）"><a href="#Data-PreProcessing（数据预处理）" class="headerlink" title="Data PreProcessing（数据预处理）"></a>Data PreProcessing（数据预处理）</h2><h3 id="1-无量纲化"><a href="#1-无量纲化" class="headerlink" title="1. 无量纲化"></a>1. 无量纲化</h3><table><thead><tr><th><strong>名称</strong></th><th>适用场景</th><th>做法</th><th><strong>公式</strong></th><th><strong>特点</strong></th><th><strong>缺点</strong></th></tr></thead><tbody><tr><td>标准化(Standardization)</td><td>1. 某些算法要求样本具有<strong>零均值和单位方差</strong>； 2.需要消除样本不同属性具有<strong>不同量级</strong>时的影响； 3.在分类、聚类算法中，需要使用距离来度量相似性的时候（如SVM、KNN），或者使用PCA技术进行降维的时候，Z-score表现更好。</td><td>基于原始数据的均值（mean）和标准差（standard deviation）进行数据的标准化。</td><td>$$x’ =  \frac{x-\mu}{\sigma} $$其中 $\mu = \frac{1}{N} \sum_{i=1}^{N}x_i$ $\sigma = \sqrt{\frac{1}{N}\sum_{i=1}^{N}}$</td><td>简单，容易计算，Z-Score能够应用于数值型的数据，并且不受数据量级的影响。标准化只是调整特征整体的分布。</td><td>1.对于数据的分布有一定的要求，正态分布是最有利于Z-Score计算的 2.Z-Score消除了数据具有的实际意义，因此Z-Score的结果只能用于比较数据间的结果，关注数据的真实意义还需要还原其原值 3.如果存在异常值，则无法保证平衡的特征尺度。</td></tr><tr><td>MinMax归一化(Normalization)</td><td>1.归一化有可能提高精度——数量级的差异将导致量级较大的属性占据主导地位，但实际情况有可能是值域范围小的特征更重要；</td><td>区间缩放法利用了边界值信息，将属性缩放到[0,1]。</td><td>$$x’ =  \frac{x-Min}{Max-Min} $$</td><td>归一化输出在[0,1]或[-1,1]之间；如果数据较为稳定，不存在极端的最大最小值，用归一化。</td><td>1.当有新数据加入时，可能导致max和min的变化，需要重新定义；</td></tr><tr><td>MaxAbs归一化(Normalization)</td><td>2.数量级的差异将导致迭代收敛速度减慢——当使用梯度下降法寻求最优解时，很有可能走“之字型”路线（垂直等高线走），从而导致需要迭代很多次才能收敛；3.依赖于<strong>样本距离</strong>的算法对于数据的数量级非常敏感，务必归一化。</td><td>单独地缩放和转换每个特征，使得训练集中的每个特征的最大绝对值将为1.0，将属性缩放到[-1,1]。它不会移动/居中数据，因此不会破坏任何稀疏性。</td><td>$$x’ =  \frac{x}{</td><td>Max</td><td>} $$</td></tr><tr><td>正态分布化</td><td>1.将每个样本缩放到单位范数(每个样本的范数为1)，如果要使用如二次型(点积)或者其它核方法计算两个样本之间的相似性，这个方法会很有用。2.该方法是文本分类和聚类分析中经常使用的——向量空间模型（Vector Space Model)的——基础。</td><td>对每个样本计算其$L_{p}$范数，然后对该样本中每个元素<strong>除以该范数</strong>，这样处理的结果是使得每个处理后样本的$L_{p}$ 范数(L1-norm, L2-norm)等于1。</td><td>$$x’ =  \frac{x}{L_{2}-norm } $$</td><td></td><td></td></tr></tbody></table><p><strong>$L_{p}$范数：</strong></p><ul><li>在线性代数，函数分析等数学分支中，范数（Norm）是一个函数，其赋予某个向量空间（或矩阵）中的每个向量以长度或大小。</li></ul><ol><li><p>$L_{0}-norm$ </p><p>$||w||<em>{0} = num(i)$   $with$    $ x</em>{i}  \neq 0 $ （表示向量中所有非零元素的个数）</p></li><li><p>$L_{1}-norm$ </p><p>$$||w||<em>{1} = \sum</em>{1}^{d}|x_i| $$ （表示每个元素的绝对值之和）</p></li><li><p>$L_{2}-norm$ </p><p>$$||w||<em>{2} = \sqrt{\sum</em>{i=1}^{d}(x_j)^2} $$  （欧氏距离）</p></li><li><p>$L_{p}-norm$ </p><p>$$||w||<em>{p} = ({\sum</em>{i=1}^{d}x_j^p})^{\frac{1}{p}} $$  </p></li><li><p>$L_{max}-norm$ （对象属性之间的最大距离，）</p><p>$$||w||_{\infty} = max（│x_1│，│x_2│，…，│x_n│）$$</p></li></ol><p>可以看到sklearn中对「正态分布化」的实现细节：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">if norm &#x3D;&#x3D; &#39;l1&#39;:</span><br><span class="line">    norms &#x3D; np.abs(X).sum(axis&#x3D;1)</span><br><span class="line">elif norm &#x3D;&#x3D; &#39;l2&#39;:</span><br><span class="line">    norms &#x3D; row_norms(X)</span><br><span class="line">elif norm &#x3D;&#x3D; &#39;max&#39;:</span><br><span class="line">    norms &#x3D; np.max(X, axis&#x3D;1)</span><br><span class="line">norms &#x3D; _handle_zeros_in_scale(norms, copy&#x3D;False)</span><br><span class="line">X &#x2F;&#x3D; norms[:, np.newaxis]</span><br></pre></td></tr></table></figure><h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ul><li>一般来说，建议优先使用标准化。对于输出有要求时再尝试别的方法，很多方法都可以将输出范围调整到[0, 1]；如果我们对于数据的分布有假设的话，更加有效的方法是使用相对应的概率密度函数来转换。</li><li>如果数据存在异常值和较多噪音，用标准化，可以间接通过中心化避免异常值和极端值的影响。</li><li>除了上面介绍的方法外，还有一些相对没这么常用的处理方法：RobustScaler、PowerTransformer、QuantileTransformer和QuantileTransformer等。</li></ul><h3 id="2-特征分桶"><a href="#2-特征分桶" class="headerlink" title="2. 特征分桶"></a>2. 特征分桶</h3><p>——即数据离散化，将数值型特征特征分箱。</p><p><strong>适用场景：</strong></p><ul><li>离散化后的特征对异常数据有很强的鲁棒性（过分远离的特征也可落入其中一个分类）；</li><li>对于线性模型，表达能力受限；单变量离散化为N个后，每个变量有单独的权重，相当于模型引入了非线性，能够提升模型表达能力，加大拟合；</li><li>离散化后可以进行特征交叉，由M+N个变量变为M*N个变量，进一步引入非线性，提升表达能力；</li><li>特征离散化后，模型会更稳定（比如如果对用户年龄离散化，20-30作为一个区间，不会因为一个用户年龄长了一岁就变成一个完全不同的人；当然处于区间相邻处的样本会刚好相反，所以怎么划分区间是门学问）；</li><li>特征离散化以后，起到了简化了逻辑回归模型的作用，降低了模型过拟合的风险；</li><li>可以将缺失作为独立的一类带入模型；</li><li>将所有变量变换到相似的尺度上。</li></ul><h4 id="无监督分箱法"><a href="#无监督分箱法" class="headerlink" title="无监督分箱法"></a>无监督分箱法</h4><table><thead><tr><th>名称</th><th>做法</th><th>特点</th></tr></thead><tbody><tr><td>等距分箱</td><td>按照相同宽度将数据分成几等份。</td><td>受到异常值的影响比较大。</td></tr><tr><td>等频分享</td><td>将数据分成几等份，每等份数据里面的个数是一样的。</td><td></td></tr><tr><td>聚类分箱</td><td>基于k均值聚类的分箱：k均值聚类法将观测值聚为k类，但在聚类过程中需要保证分箱的有序性：第一个分箱中所有观测值都要小于第二个分箱中的观测值，第二个分箱中所有观测值都要小于第三个分箱中的观测值，等等。</td><td></td></tr><tr><td>二值化</td><td>二值化可以将数值型（numerical）的feature进行阀值化得到boolean型数据。这对于下游的概率估计来说可能很有用（比如：数据分布为Bernoulli分布时）。</td><td>$$ x’ = \left{ \begin{aligned} 1, &amp;  &amp; x&gt;threshold \ 0, &amp;  &amp; x \leq threshold \end{aligned} \right.{ }$$</td></tr></tbody></table><h4 id="有监督分箱法"><a href="#有监督分箱法" class="headerlink" title="有监督分箱法"></a>有监督分箱法</h4><table><thead><tr><th>名称</th><th>做法</th><th>主要思想</th></tr></thead><tbody><tr><td>卡方分箱法</td><td>自底向上的（基于合并的）数据离散化方法。它依赖于卡方检验：具有最小卡方值的相邻区间合并在一起，直到满足确定的停止准则。</td><td>对于精确的离散化，相对类频率在一个区间内应当完全一致。因此,如果两个相邻的区间具有非常类似的类分布，则这两个区间可以合并；否则，它们应当保持分开。而低卡方值表明它们具有相似的类分布。</td></tr><tr><td>最小熵法分箱</td><td>分箱使总熵值达到最小，也就是能够<strong>最大限度地</strong>区分因变量的各类别（类间差异最大，类内差异最小）。</td><td><strong>熵</strong>是信息论中数据无序程度的度量标准，提出信息熵的基本目的是找出某种符号系统的信息量和冗余度之间的关系，以便能用最小的成本和消耗来实现最高效率的数据存储、管理和传递。</td></tr></tbody></table><h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><ul><li>我们对特征进行分箱后，需要对分箱后的每组（箱）进行woe编码和IV值的计算，通过IV值进行变量筛选后，然后才能放进模型训练。</li><li>分箱后需要进行特征编码，如：LabelEncode、OneHotEncode或LabelBinarizer等。</li></ul><h3 id="3-统计变换"><a href="#3-统计变换" class="headerlink" title="3. 统计变换"></a>3. 统计变换</h3><ul><li>数据分布的倾斜有很多负面的影响。我们可以使用特征工程技巧，利用统计或数学变换来减轻数据分布倾斜的影响。使原本密集的区间的值尽可能的分散，原本分散的区间的值尽量的聚合。</li><li>这些变换函数都属于<strong>幂变换</strong>函数簇，通常用来创建单调的数据变换。它们的主要作用在于它能帮助稳定方差，始终保持分布接近于正态分布并使得数据与分布的平均值无关。</li></ul><table><thead><tr><th>名称</th><th>作用</th><th>公式</th></tr></thead><tbody><tr><td>Log变换</td><td>Log变换通常用来创建<strong>单调的数据变</strong>换。</td><td>$$y = log_b{x}$$</td></tr><tr><td>Box-Cox变换</td><td>Box-Cox变换的主要特点是引入一个参数，通过数据本身估计该参数进而确定应采取的数据变换形式。</td><td>$$ f(x, \lambda) = x^\lambda \left{ \begin{aligned} \frac{x^\lambda - 1}{\lambda}, &amp;  &amp; for \lambda &gt; 0 \ log_e(x), &amp;  &amp; for \lambda = 0 \end{aligned} \right.{ }$$λ 的最佳取值通常由最大似然或最大对数似然确定。</td></tr></tbody></table><h4 id="Log变换"><a href="#Log变换" class="headerlink" title="Log变换"></a>Log变换</h4><ul><li>它的主要作用在于帮助<strong>稳定方差</strong>，始终保持分布接近于正态分布并<strong>使得数据与分布的平均值无关</strong>。Log变换倾向于<strong>拉伸那些落在较低的幅度范围内</strong>自变量值的范围，倾向于压缩或减少更高幅度范围内的自变量值的范围。从而使得倾斜分布尽可能的接近正态分布。 </li></ul><p><strong>适用场景：</strong></p><ul><li>针对一些数值连续特征的方差不稳定，特征值<strong>重尾分布</strong>我们需要采用Log化来调整整个数据分布的方差，属于方差稳定型数据转换。比如在词频统计中，有些介词的出现数量远远高于其他词，这种词频分布的特征就会现有些词频特征值极不协调的状况，拉大了整个数据分布的方差。这个时候，可以考虑Log化。尤其在<strong>分本分析领域，时间序列分析领域</strong>，Log化非常常见, 其目标是让方差稳定，把目标关注在其波动之上。<img src="http://myimg.icyhh.xyz/ml/10.png?imageView2/format/webp" ></li></ul><h4 id="Box-Cox变换"><a href="#Box-Cox变换" class="headerlink" title="Box-Cox变换"></a>Box-Cox变换</h4><ul><li>Box-Cox变换是Box和Cox在1964年提出的一种广义幂变换方法，是统计建模中常用的一种数据变换，用于连续的响应变量不满足正态分布的情况。 </li><li>该函数有一个前提条件，即数值型值必须先变换为正数（与 log 变换所要求的一样）。万一出现数值是负的，使用一个常数对数值进行偏移是有帮助的。</li></ul><p><strong>适用场景：</strong></p><ul><li>Box-Cox变换之后，可以一定程度上减小不可观测的误差和预测变量的相关性。Box-Cox变换可以明显地<strong>改善数据的正态性、对称性和方差相等性</strong>，对许多实际数据都是行之有效的。</li></ul><img src="http://myimg.icyhh.xyz/ml/11.png?imageView2/format/webp" ><h3 id="4-特征编码"><a href="#4-特征编码" class="headerlink" title="4. 特征编码"></a>4. 特征编码</h3><ul><li>在统计学中，分类特征是可以采用有限且通常固定数量的可能值之一的变量，基于某些定性属性将每个个体或其他观察单元分配给特定组或名义类别。</li></ul><table><thead><tr><th>名称</th><th>定义</th><th>优点</th><th>缺点</th></tr></thead><tbody><tr><td>标签编码（LabelEncode）</td><td>对不连续的数字或者文本进行编号，编码值介于0和n_classes-1之间的标签。</td><td>占用内存空间小，并且支持文本特征编码。</td><td>它隐含了一个假设：不同的类别之间，存在一种顺序关系。在具体的代码实现里，LabelEncoder会对定性特征列中的所有独特数据进行一次排序，从而得出从原始输入到整数的映射。所以目前还没有发现标签编码的广泛使用，一般在树模型中可以使用。</td></tr><tr><td>独热编码（OneHotEncode）</td><td>用于将表示分类的数据<strong>扩维</strong>。</td><td>因为大部分算法是基于向量空间中的度量来进行计算的，用独热编码能使非偏序关系的变量取值<strong>不具有偏序性</strong>，并且到圆点是等距的。</td><td>1.只能对数值型变量二值化，无法直接对字符串型的类别变量编码。2.当类别的数量很多时，特征空间会变得非常大。在这种情况下，一般可以用PCA来减少维度。而且one hot encoding+PCA这种组合在实际中也非常有用。</td></tr><tr><td>平均数编码（mean encoding）</td><td></td><td>如果某一个特征是定性的（categorical），而这个特征的可能值非常多（高基数），那么平均数编码（mean encoding）是一种高效的编码方式。在实际应用中，这类特征工程能极大提升模型的性能。</td><td></td></tr></tbody></table><h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><ul><li><p>由于树模型（Random Forest、GBDT、xgboost等）对特征数值幅度不敏感，可以不进行无量纲化和统计变换处理；</p></li><li><p>依赖<u>样本距离</u>来学习的模型（如线性回归、SVM、深度学习等）</p></li><li><ul><li>对于数值型特征需要进行无量纲化处理；</li><li>对于一些<u>长尾分布</u>的数据特征，可以做统计变换，使得模型能更好优化；</li><li>对于<u>线性模型</u>，特征分箱可以提升模型表达能力；</li></ul></li></ul><ul><li>对数值型特征进行特征分箱可以让模型对异常数据有很强的鲁棒性，模型也会更稳定；分箱后也需要进行特征编码。</li></ul><h2 id="Feature-Extraction（特征提取）"><a href="#Feature-Extraction（特征提取）" class="headerlink" title="Feature Extraction（特征提取）"></a>Feature Extraction（特征提取）</h2><h2 id="Feature-Selection（特征选择）"><a href="#Feature-Selection（特征选择）" class="headerlink" title="Feature Selection（特征选择）"></a>Feature Selection（特征选择）</h2><h2 id="Feature-construction（特征构造）"><a href="#Feature-construction（特征构造）" class="headerlink" title="Feature construction（特征构造）"></a>Feature construction（特征构造）</h2><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 木东居士 / <a href="https://mp.weixin.qq.com/s/qWO9zgKyntvyWfftpGqrHQ" target="_blank" rel="noopener">​特征工程系列：特征预处理（上）</a> &amp; <a href="https://mp.weixin.qq.com/s/r9AT6FbWGVP3fORn3FeEvg" target="_blank" rel="noopener">特征工程系列：特征预处理（下）</a></p><p>Ref. 2 木东居士 / <a href="https://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247483857&idx=3&sn=5a4573e5fe074241a45f6affb969448f" target="_blank" rel="noopener">机器学习的敲门砖：归一化与KD树</a></p><p>Ref. 3 是安酱和菜菜呀 / <a href="https://www.cnblogs.com/juanjiang/archive/2019/05/30/10948849.html" target="_blank" rel="noopener">sklearn中的数据预处理和特征工程</a></p><p>Ref.4 Dave / <a href="https://zhuanlan.zhihu.com/p/29957294" target="_blank" rel="noopener">ML 入门：归一化、标准化和正则化</a></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h1 id=&quot;数据预处理与特征工程&quot;&gt;&lt;a href=&quot;#数据预处理与特征工程&quot; class=&quot;headerlink&quot; title=&quot;数据预处理与特征工程&quot;&gt;&lt;/a&gt;数据预处理与特征工程&lt;/h1&gt;&lt;ul&gt;
+&lt;li&gt;思维导图直达：&lt;a href=&quot;https://mubu.com
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x02_measurement</title>
+    <link href="icyhh.xyz/2020/03/02/Lecture0x02-measurement/"/>
+    <id>icyhh.xyz/2020/03/02/Lecture0x02-measurement/</id>
+    <published>2020-03-02T15:52:03.000Z</published>
+    <updated>2020-09-23T08:41:04.955Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="1-回归模型中的指标选择"><a href="#1-回归模型中的指标选择" class="headerlink" title="1. 回归模型中的指标选择"></a>1. 回归模型中的指标选择</h1><h2 id="评判指标一览"><a href="#评判指标一览" class="headerlink" title="评判指标一览"></a>评判指标一览</h2><ul><li>在预测任务中，给定样例集$D = {(x_1, y_1), (x_2, y_2),…,(x_n,y_n)}$，其中$y_i$是样本$x_i$的真实的观测值，$n$表示样本数量，$f(x_i)$代表对样本$x_i$的预测值。</li></ul><table><thead><tr><th>名称</th><th>中文</th><th>特点</th><th>公式</th><th>优劣</th></tr></thead><tbody><tr><td>Mean Absolute Error（MAE）</td><td>平均绝对误差</td><td>$$[0, +\infty)$$误差越小越好。也即L1损失。</td><td>$$MAE =\frac{1}{n}\sum_{i=0}^{n}{</td><td>y_i - f(x_i)</td></tr><tr><td>Mean Absolute Pencentage Error (MAPE）</td><td>平均绝对百分比误差</td><td>$$[0, +\infty)$$误差越小越好。加权版的MAE</td><td>$$MAPE = \frac{1}{n}\sum_{i=0}^{n}</td><td>\frac{y_i - f(x_i)}{y_i}</td></tr><tr><td>Mean Squared Error/Deviation（MSE/D）</td><td>均方误差</td><td>$$[0, +\infty)$$误差越小越好。也即L2损失。</td><td>$$MSE = \frac{1}{n}\sum_{i=0}^{n}(f(x_i)-y_i)^2$$</td><td>更易受到极端值影响</td></tr><tr><td>Root Mean Square Error/Deviation（RMSE/D）</td><td>均方根误差</td><td>$$[0, +\infty)$$误差越小越好。MSE开根号</td><td>$$RMSE = \sqrt{\frac{1}{n}\sum_{i=0}^{n}(f(x_i)-y_i)^2}$$</td><td>容易受到极端值影响</td></tr><tr><td>Normalized Root Mean Square Error（NRMSE）</td><td>归一化的均方根误差</td><td>$$(-\infty, 1]$$误差越小越好。归一化的RMSE</td><td>$$NRMSE = \frac{RMSE}{y_{max}-y_{min}}$$</td><td>容易受到极端值影响</td></tr><tr><td>Coefficient of determination （R squared）</td><td>决定系数</td><td>$$[0, 1]$$反映因变量的全部变异能通过回归关系被自变量解释的比例，越大越好。</td><td>$$R^2=1-1 - \frac{\sum\limits_i(y_i - f(x_i))^2 }{\sum\limits_i(y_i - \bar{y})^2}$$</td><td>考虑了预测值与真值之间的差异&amp;问题本身真值之间的差异；归一化的度量标准</td></tr></tbody></table><h2 id="关于-R-2-的深入了解"><a href="#关于-R-2-的深入了解" class="headerlink" title="关于$R^2$的深入了解"></a>关于$R^2$的深入了解</h2><h3 id="R-2-的公式推导"><a href="#R-2-的公式推导" class="headerlink" title="$R^2$的公式推导"></a>$R^2$的公式推导</h3><ul><li>搞清楚R2_score计算之前，我们还需要了解几个统计学概念。若用$y_i$表示真实的观测值，用$\bar{y}$表示真实观测值的平均值，用$\hat{y_i}$表示预测值,则：</li></ul><p><strong>1、回归平方和：SSR</strong></p><p>$$SSR = \sum_{i=1}^{n}(\hat{y_i} - \bar{y})^2$$</p><p>即估计值与平均值的误差，反映<strong>自变量与因变量之间的相关程度</strong>的偏差平方和。</p><p><strong>2、残差平方和：SSE</strong></p><p>$$SSE = \sum_{i=1}^{n}(y_i-\hat{y_i} )^2$$</p><p>即估计值与真实值的误差，反映<strong>模型拟合程度</strong>。</p><p><strong>3、总离差平方和：SST</strong><br>$$SST =SSR + SSE= \sum_{i=1}^{n}(y_i - \bar{y})^2$$</p><p>即<strong>平均值与真实值的误差</strong>，反映与数学期望的偏离程度。</p><p>$$R^2=1-\frac{SSE}{SST} = 1 - \frac{\sum\limits_i(y_i - \hat{y_i})^2 / n}{\sum\limits_i(y_i - \bar{y})^2 / n} = 1 - \frac{MSE}{Var}$$<br>分子就变成了常用的评价指标均方误差MSE，分母就变成了方差。</p><h3 id="R-2-的理解"><a href="#R-2-的理解" class="headerlink" title="$R^2$的理解"></a>$R^2$的理解</h3><ul><li><p>对于$R^2$可以通俗地理解为<strong>使用均值作为误差基准，看预测误差是否大于或者小于均值基准误差。</strong></p><blockquote><p> R2_score = 1，样本中预测值和真实值完全相等，没有任何误差，表示回归分析中自变量对因变量的解释越好，也表示我们的预测模型不犯任何错误。<br> R2_score = 0。此时分子等于分母，样本的每项预测值都等于均值。</p><p> 如果R2_score &lt; 0，说明我们学习到的模型还不如基准模型（样本均值）。很有可能我们的数据不存在任何线性关系。</p><p> R2_score不是R的平方，也可能为负数(分子&gt;分母)，模型等于盲猜，还不如直接计算目标变量的平均值。</p></blockquote></li></ul><h3 id="R-2-的运用："><a href="#R-2-的运用：" class="headerlink" title="$R^2$的运用："></a>$R^2$的运用：</h3><p>  1、$R^2$ 一般用在线性模型中（非线性模型也可以用）<br>  2、$R^2$不能完全反映模型预测能力的高低，假如某个实际观测的<u>自变量取值范围很窄</u>，此时所建模型的$R^2$ 会较大，但这并不代表模型在外推应用时的效果肯定会很好。<br>  3、数据集的样本越大，$R^2$越大，因此，不同数据集的模型结果比较会有一定的误差，此时可以使用Adjusted R-Square (校正决定系数），能对添加的非显著变量给出惩罚:</p><p>  $R^2_{\text{Adj}}=1-(1-R^2)\frac{n-p-1}{n-1}$ ，其中n是样本的个数，p是变量的个数</p><h2 id="其他注意事项"><a href="#其他注意事项" class="headerlink" title="其他注意事项"></a>其他注意事项</h2><ul><li>在选用评价指标时，需要考虑：<ol><li>真实观测值数据中是否有0 ，如果有0值就不能用MPE、MAPE之类的指标；</li><li>数据的分布如何 ，如果是<strong>长尾分布可以选择带对数变换的指标</strong>，中位数指标比平均数指标更好；</li><li>是否存在极端值 ，诸如MAE、MSE、RMSE之类容易受到极端值影响的指标就不要选用；</li><li>对异常值而言，中位数比均值更加鲁棒，MAE比MSE更不易受到离群值影响；但MAE存在一个严重问题，<strong>绝对值函数不是处处可导的</strong>，更新梯度始终相同，这不利于模型的学习，因此确定损失函数时不能用MAE。但是在评价模型时不影响，可以用。因此模型的评价方法可以和损失函数不同。</li><li>得到的指标是否依赖于量纲 (即绝对度量，而不是相对度量)，如果指标依赖量纲那么不同模型之间可能因为量纲不同而无法比较；（需要归一化）</li><li><strong>平方操作会放大样本中预测结果和真实结果较大的差距</strong>。MAE没有放大。<strong>而我们就是要解决目标函数最大差距，因为选RMSE更好一点</strong>。</li></ol></li></ul><h1 id="2-分类模型中的指标选择"><a href="#2-分类模型中的指标选择" class="headerlink" title="2. 分类模型中的指标选择"></a>2. 分类模型中的指标选择</h1><h2 id="混淆矩阵（confusion-matrix）"><a href="#混淆矩阵（confusion-matrix）" class="headerlink" title="混淆矩阵（confusion_matrix）"></a>混淆矩阵（confusion_matrix）</h2><table><thead><tr><th align="left"></th><th align="left">预测值_反例0</th><th align="left">预测值_正例1</th></tr></thead><tbody><tr><td align="left">真实值_反例0</td><td align="left">True Negative（TN）</td><td align="left">False Positive（FP）</td></tr><tr><td align="left">真实值_正例1</td><td align="left">False Negative（FN）</td><td align="left">True Positive（TP）</td></tr></tbody></table><h2 id="指标"><a href="#指标" class="headerlink" title="指标"></a>指标</h2><h3 id="accuracy、precision、recall、F1"><a href="#accuracy、precision、recall、F1" class="headerlink" title="accuracy、precision、recall、F1"></a>accuracy、precision、recall、F1</h3><table><thead><tr><th>名称</th><th>中文</th><th>公式</th><th>定义/用法</th><th>特点</th></tr></thead><tbody><tr><td>accuracy</td><td>准确度</td><td>$$Accuracy = \frac{TP+TN}{TN+FP+FN+TP}$$</td><td>所有样本中预测对的比率</td><td>对于原本就有偏（正反例不平衡）的样本集，准确度无法说明问题。</td></tr><tr><td>precision</td><td>查准率</td><td>$$Precision = \frac{TP}{TP+FP}$$</td><td>所有预测为正例的样本中真的为正例的比率</td><td>倾向于只挑选最有把握的样例时，查准率较高。</td></tr><tr><td>recall</td><td>查全率/召回率</td><td>$$ Recall = \frac{TP}{TP+FN}$$</td><td>所有真实正例中被预测对的比率</td><td>倾向于预测为1时，查全率较高。</td></tr><tr><td>F1-score</td><td>-</td><td>$$\frac{1}{F1}=\frac {1} {Precision}+\frac{1}{Recall}$$<br/>$$F1=\frac {2PR} {P+R}$$</td><td>基于precision与recall的调和平均</td><td>Precision与Recall相互矛盾；而F1越高，模型越稳健。</td></tr></tbody></table><h3 id="P-R曲线"><a href="#P-R曲线" class="headerlink" title="P-R曲线"></a>P-R曲线</h3><ul><li><p>在P-R曲线中，Recall为横坐标，Precision为纵坐标。在P-R曲线中，曲线越凸向右上角越好。</p></li><li><p>P-R曲线的生成方法：算法对样本进行分类时，都会有<strong>置信度</strong>，即表示该样本是正样本的概率，比如99%的概率认为样本Ａ是正例，１％的概率认为样本B是正例。通过选择合适的阈值，比如50%，对样本进行划分，概率大于50%的就认为是正例，小于50%的就是负例。通过置信度就可以<strong>对所有样本进行排序，再逐个样本的选择阈值</strong>，在该样本之前的都属于正例，该样本之后的都属于负例。每一个样本作为划分阈值时，都可以计算对应的precision和recall，那么就可以以此绘制曲线。</p><img src="http://myimg.icyhh.xyz/ml/09.png?imageView2/format/webp" >（配图从Lecture0x01中生成）</li><li><p>Recall值是递增的（但并非严格递增），随着划分点左移，正例被判别为正例的越来越多，不会减少。而精确率precision并非递减，二是有可能振荡的，虽然正例被判为正例的变多，但负例被判为正例的也变多了，因此precision会振荡，但整体趋势是下降。</p></li><li><p>P-R曲线肯定会经过（0, 1）点，比如将所有的样本全部判为负例，此时FP=0，TP=0，FN=正样本数，TN=负样本数，则（如果此处推断有误欢迎指出）$$Precision = \frac{TP}{TP+FP} =  \frac{TP}{TP} \rightarrow  1 $$   $$ Recall = \frac{TP}{TP+FN} = 0 $$  </p></li><li><p>随着阈值点左移（变小），将所有的样本全部判为正例时，FN=0，TN=0，FP=负样本数，TP=正样本数，故而有$$ Recall = \frac{TP}{TP+FN} = \frac{TP}{TP} = 1 $$  </p></li><li><p>但曲线最终不会到（1, 0）点。很多P-R曲线的终点看着快到（1,0）点了，可能是因为负例远远多于正例，此时FP$\gg$TP：</p><p>$$Precision = \frac{TP}{TP+FP} \rightarrow  0  $$ </p></li></ul><h3 id="ROC曲线"><a href="#ROC曲线" class="headerlink" title="ROC曲线"></a>ROC曲线</h3><ul><li><p>ROC曲线称为受试者工作特征曲线 （Receiver Operating Characteristic Curve），又称为感受性曲线（Sensitivity Curve），此名称的由来有二战相关的典故；而AUC（Area Under Curve）是ROC曲线下的面积。在ROC曲线中曲线越凸向左上角越好。</p><img src="http://myimg.icyhh.xyz/ml/08.png?imageView2/format/webp" >（配图从Lecture0x01中生成）</li><li><p>0.5 &lt; AUC &lt; 1，优于随机猜测。这个分类器（模型）妥善设定阈值的话，能有预测价值。</p></li><li><p>AUC = 0.5，跟随机猜测一样（例：丢铜板），模型没有预测价值。</p></li><li><p>AUC &lt; 0.5，比随机猜测还差。</p></li><li><p><strong>最优零界点</strong>：保证TPR高的同时FPR要尽量的小，也即找到离（0,1）最近的点。</p></li></ul><h3 id="曲线选择"><a href="#曲线选择" class="headerlink" title="曲线选择"></a>曲线选择</h3><p>1、 ROC曲线兼顾正例与负例，所以适用于评估分类器的整体性能；相比而言PR曲线完全聚焦于正例的评判。</p><p>2、如果有多份数据且存在不同的类别分布，这时候如果只想单纯地比较分类器的性能且剔除类别分布改变的影响，则ROC曲线比较适合；如果想测试不同类别分布下对分类器的性能的影响，则PR曲线比较适合。</p><p>3、相对来讲ROC曲线会稳定很多，在正负样本量都足够的情况下，ROC曲线足够反映模型的判断能力；但类别不平衡问题中，ROC曲线通常会给出一个乐观的效果估计，所以此时候还是PR曲线更好。</p><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 木东居士/<a href="https://mp.weixin.qq.com/s/vvCM0vWH5kmRfrRWxqXT8Q" target="_blank" rel="noopener">机器学习的敲门砖：kNN算法（中）</a></br><br>Ref. 2 饼干 / <a href="https://mp.weixin.qq.com/s/Fi13jaEkM5EGjmS7Mm_Bjw" target="_blank" rel="noopener">评价分类结果（上）</a></br><br>Ref. 3 饼干 / <a href="https://mp.weixin.qq.com/s/BEmMdQd2y1hMu9wT8QYCPg" target="_blank" rel="noopener">模型之母：线性回归的评价指标</a></br><br>Ref. 4 云社区 / <a href="https://cloud.tencent.com/developer/article/1462976" target="_blank" rel="noopener">回归模型评估指标（机器学习基础）</a></br><br>Ref. 5 <a href="https://www.cnblogs.com/jpld/p/12022123.html" target="_blank" rel="noopener">深度研究：回归模型评价指标R2_score</a></br><br>Ref. 6 kuaizi_sophia / <a href="https://blog.csdn.net/kuaizi_sophia/article/details/84942307" target="_blank" rel="noopener">分类和回归模型常用的性能评价指标</a></br><br>Ref. 7 大数据文摘 / <a href="https://baijiahao.baidu.com/s?id=1603857666277651546&wfr=spider&for=pc" target="_blank" rel="noopener">机器学习大牛最常用的5个回归损失函数，你知道几个？</a></br><br>Ref. 8 <a href="https://www.plob.org/article/12476.html" target="_blank" rel="noopener">全面了解ROC曲线</a></br><br>Ref. 9 <a href="https://blog.csdn.net/b876144622/article/details/80009867" target="_blank" rel="noopener">P-R曲线深入理解</a></br></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h1 id=&quot;1-回归模型中的指标选择&quot;&gt;&lt;a href=&quot;#1-回归模型中的指标选择&quot; class=&quot;headerlink&quot; title=&quot;1. 回归模型中的指标选择&quot;&gt;&lt;/a&gt;1. 回归模型中的指标选择&lt;/h1&gt;&lt;h2 id=&quot;评判指标一览&quot;&gt;&lt;a href=&quot;#评判指标一
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Lecture0x01_knn</title>
+    <link href="icyhh.xyz/2020/02/24/Lecture0x01-knn/"/>
+    <id>icyhh.xyz/2020/02/24/Lecture0x01-knn/</id>
+    <published>2020-02-24T04:10:42.000Z</published>
+    <updated>2020-09-23T08:41:04.955Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>​        前言：回想起来，距离第一次接触Machine Learning、做project、在组会上做分享，已经过了整整三年，前沿技术一直在发展，甚至YOLO之父 Joseph Redmon都宣布要退出CV界，而我的知识储备却并未增加。为了避免关键时刻生疏，今年初跟随饼干的学习小组，重温机器学习的轶事。</p></blockquote><h1 id="1-KNN若只如初见"><a href="#1-KNN若只如初见" class="headerlink" title="1. KNN若只如初见"></a>1. KNN若只如初见</h1><p>​        鉴于已经不是第一次与knn约会了，不多寒暄直入主题，给它发一个身份卡（持续更新）。</p><table><thead><tr><th>名称</th><th>中文</th><th>分类模型</th><th>回归模型</th><th>关注参数</th><th>适用场景</th><th>必备技巧</th></tr></thead><tbody><tr><td>K-Nearest Neighbor</td><td>k最近邻算法</td><td>Yes</td><td>Yes</td><td>k, 相似度距离算法</td><td>特征维数低，特征以连续值为主，样本量小</td><td>归一化</td></tr></tbody></table><h1 id="2-建模过程"><a href="#2-建模过程" class="headerlink" title="2. 建模过程"></a>2. 建模过程</h1><h2 id="2-1-数据集"><a href="#2-1-数据集" class="headerlink" title="2-1. 数据集"></a>2-1. 数据集</h2><p>​        恰逢疫情时段，我便尝试拿一份公开的疫情人数<a href="https://lab.isaaclin.cn/nCoV/" target="_blank" rel="noopener">数据</a>来分析一下，做一个简单的、可能并不太合适的建模。<br><img src="http://myimg.icyhh.xyz/ml/01.png?imageView2/format/webp" ></p><p>​        数据和特征决定了机器学习的上限，而模型和算法只是逼近这个上限。对原始数据的预处理对模型结果的优劣会有关键影响，这里我先对数据集做一个简单分析：</p><blockquote><p>provinceName (string): 中文省名<br>provinceEnglishName (string): 英文省名<br>province_zipCode (string): 省邮政编码<br>cityName (string): 中文城市名<br>cityEnglishName (string): 英文城市名<br>city_zipCode (string): 城市邮政编码<br>province_confirmedCount (int): 省确诊人数<br>province_suspectedCount (int): 省疑似人数<br>province_curedCount  (int): 省治愈人数<br>province_deadCount (int): 省死亡人数<br>city_confirmedCount (int): 市确诊人数<br>city_suspectedCount (int): 市疑似人数<br>city_curedCount (int): 市治愈人数<br>city_deadCount (int): 市死亡人数<br>updateTime: 更新时间</p></blockquote><p>​        假设要预测的对象是“市死亡人数”，其他特征都为他打辅助。人数是连续值，这里需要用一个回归模型。<br>​        显而易见，省名、英文省、邮政编码互相之间交叉熵为零，相似度100%，三个特征一起用对结果预测没有增强作用，反而冗余，所以三选一即可。先以最简单地方式处理，留下邮政编码，去除名字特征。</p><p>​       特征X：</p><blockquote><p>province_zipCode (string): 省邮政编码<br>city_zipCode (string): 城市邮政编码<br>province_confirmedCount (int): 省确诊人数<br>province_suspectedCount (int): 省疑似人数<br>province_curedCount  (int): 省治愈人数<br>province_deadCount (int): 省死亡人数<br>city_confirmedCount (int): 市确诊人数<br>city_suspectedCount (int): 市疑似人数<br>city_curedCount (int): 市治愈人数</p></blockquote><p>​       预测对象Y：</p><blockquote><p>city_deadCount (int): 市死亡人数</p></blockquote><p>​        邮政编码在这份表里有缺失，数据预处理需要先对它做个简单的<strong>数据填充</strong>（其实为避免特征噪声，数据存在的情况下对城市名进行重编码会更准确；迫不得已才做这样的数据填充）。</p><img src="http://myimg.icyhh.xyz/ml/02.png?imageView2/format/webp" >​        todo. 可以改进的点有：改变非连续值特征的编码 / 对不同量纲的特征数据做归一化。<h2 id="2-2-训练模型"><a href="#2-2-训练模型" class="headerlink" title="2-2. 训练模型"></a>2-2. 训练模型</h2><p>​        将数据集切分为训练集测试集，以便验证是否有<strong>过拟合</strong>的问题。这里可以思考的点有：k的选择[4-2](## 4-2. \k的选择) / knn算法的距离选择<a href="##4-1.相似度评判的方式">4-1</a> / 是否对投票加权 / 数据如果自带顺序，需要shuffle一下。</p><img src="http://myimg.icyhh.xyz/ml/03.png?imageView2/format/webp" ><h2 id="2-3-测试模型"><a href="#2-3-测试模型" class="headerlink" title="2-3. 测试模型"></a>2-3. 测试模型</h2><p>​        验证模型的预测结果，这里可以思考的点：有评判指标的选择<a href="https://mywiki.icyhh.xyz/2020/03/02/Lecture0x02-measurement/" target="_blank" rel="noopener">Lecture02</a> ，如何正确的验证模型的效果。<br><img src="http://myimg.icyhh.xyz/ml/04.png?imageView2/format/webp" ></p><h1 id="3-手写knn"><a href="#3-手写knn" class="headerlink" title="3. 手写knn"></a>3. 手写knn</h1><h2 id="3-1-核心原理"><a href="#3-1-核心原理" class="headerlink" title="3-1. 核心原理"></a>3-1. 核心原理</h2><p>​        一言以蔽之预测/分类思路是：找到已知数据集里与自己最相似（e.g. 欧氏距离）的k个样本，借鉴他们的结果（e.g. 回归模型则取平均/加权取平均，分类模型则投票/加权投票）。<br><img src="http://myimg.icyhh.xyz/ml/05.png?imageView2/format/webp" ></p><h2 id="3-2-效果对比"><a href="#3-2-效果对比" class="headerlink" title="3-2. 效果对比"></a>3-2. 效果对比</h2><p>​       首先展示盲选k=5时，在全数据集（训练样本数：51924，测试样本数：5770）中，sklearn封装好的knn表现：</p><img src="http://myimg.icyhh.xyz/ml/06-1.png?imageView2/format/webp" ><p>​       然后缩小一下数据的范围，取1%的样本数据集（训练样本数：577，测试样本数：519）中，对比一下调包与自己手动实现的效果：</p><img src="http://myimg.icyhh.xyz/ml/06-2.png?imageView2/format/webp" ><img src="http://myimg.icyhh.xyz/ml/07.png?imageView2/format/webp" ><p>​       自己手写的knn比sklearn封装的相比，暴力遍历的方式运算耗时过分长[ 时间复杂度O(n) ]，所以不得不放弃在全数据集中做实验——计算最近邻居可以采用KDTree、BallTree等算法，有效加速；在1%的样本数据集中明显过拟合了，$R^2$ 的值在训练集上接近1，在测试集上却为0。</p><h1 id="4-更进一步"><a href="#4-更进一步" class="headerlink" title="4. 更进一步"></a>4. 更进一步</h1><h2 id="4-1-相似度评判的方式"><a href="#4-1-相似度评判的方式" class="headerlink" title="4-1.相似度评判的方式"></a>4-1.相似度评判的方式</h2><table><thead><tr><th>名称</th><th>中文</th><th>定义/用法</th><th>参考公式</th><th>适用场景</th></tr></thead><tbody><tr><td>Euclidean metric</td><td>欧几里得度量 / 欧氏距离</td><td>m维空间中两个点之间的真实距离</td><td>$$ \sqrt{(x_i-x_j)^2+(y_i-y_j)^2} $$</td><td>适用于空间问题</td></tr><tr><td>Manhattan Distance</td><td>曼哈顿距离 / 出租车几何</td><td>两个点的绝对轴距总和</td><td>$$</td><td>x_i-x_j</td></tr><tr><td>Chebyshev distance</td><td>切比雪夫距离</td><td>两个点坐标数值差(绝对值)的最大值</td><td>$$ max(</td><td>x_i-x_j</td></tr><tr><td>Mahalanobis Distance</td><td>马氏距离</td><td>测量数据的协方差距离</td><td>$$ \sqrt{(X_i-X_j)^TS^{-1}(X_i-X_j)} $$</td><td>量纲无关，可以排除变量之间的相关性的干扰</td></tr><tr><td>Bhattacharyya Distance</td><td>巴氏距离</td><td>用于测量两个离散或连续概率分布的相似性</td><td>离散概率分布：$$-ln(\sum_{x \in X}\sqrt{p(x)q(x）)})$$<br/>连续概率分布：$$\int{\sqrt{p(x)q(x)}dx} $$</td><td>常在分类中测量类之间的可分离性</td></tr><tr><td>Hamming distance</td><td>汉明距离</td><td>两个等长字符串，将其中一个变为另外一个所需要作的最小替换次数</td><td>（e.g.字符串“1111”与“1001”之间的汉明距离为2。）</td><td>信息编码（使编码间的最小汉明距离尽可能大，增强容错性）</td></tr><tr><td>Cosine</td><td>夹角余弦</td><td>衡量两个向量方向的差异</td><td>$$ cos\theta = \frac{x_ix_j+y_iy_j}{\sqrt{x_i^2+y_i^2}\sqrt{x_j^2+y_j^2}} $$</td><td>数据挖掘中衡量样本向量之间的差异</td></tr><tr><td>Pearson Correlation Coefficient</td><td>皮尔森相关系数</td><td>反映两个变量线性相关程度的统计量</td><td>$$ \rho_{XY} = \frac{E[X-E(X)(Y-E(Y))]} {\sqrt{(D(X)}\sqrt{D(Y)}} $$<br/> 期望：$$E(X) = \frac{\sum{<em>{i=1}^n X_i}}{n}  $$<br/> 方差：$$D(X) = E{[X-E(X)]^2}  $$ <br/>相关距离： $$1 - \rho</em>{XY}$$</td><td>线性相关系数</td></tr><tr><td>Jaccard similarity coefficient</td><td>杰卡德相似系数</td><td>用两个集合中不同元素占所有元素的比例来衡量两个集合的区分度</td><td>$$J(A,B)= \frac{</td><td>A\cap B</td></tr></tbody></table><p>​       此外提一下，闵可夫斯基距离（Minkowski Distance）是一组距离的定义，公式中有一个变参p：</p><p>$$ \sqrt[p]{\sum_{k=1}^n (x_{ik}-x_{jk})^p} $$</p><ol><li>当p=1时，是曼哈顿距离；</li><li>当p=2时，是欧氏距离；</li><li>当p→∞时，就是切比雪夫距离。</li></ol><p>​       其他需要注意的 / 经验记录：</p><ul><li><p>值域越大的变量常常会在距离计算中占据主导作用，因此应先对变量进行<strong>归一化</strong>。</p></li><li><p>当变量数越多，欧式距离的区分能力就越差。</p></li></ul><h2 id="4-2-k的选择"><a href="#4-2-k的选择" class="headerlink" title="4-2.k的选择"></a>4-2.k的选择</h2><ol><li><p>如果k太小，分类结果易受噪声点影响，误差会增大；</p></li><li><p>如果k太大，近邻中又可能包含太多的其它类别的点（对距离加权，可以降低k值设定的影响）；</p></li><li><p>在实际应用中，K值一般取一个比较小的数值，例如采用<strong>交叉验证法（cross-validation）</strong>来选择最优的K值。</p></li></ol><ul><li>经验规则：k一般低于<strong>训练样本数的平方根</strong>。</li></ul><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 0 <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html</a><br>Ref. 1 木东居士 / <a href="https://mp.weixin.qq.com/s/VslgD9CHyu8w6KQtf3WQYQ" target="_blank" rel="noopener">机器学习的敲门砖：初探kNN算法</a><br/><br>Ref. 2 数月亮 / <a href="https://www.cnblogs.com/gemine/p/11130032.html" target="_blank" rel="noopener">机器学习-KNN算法</a><br/><br>Ref. 3 JokerChange /  <a href="https://blog.csdn.net/m0_37075274/article/details/902736920" target="_blank" rel="noopener">KNN浅析（距离、k值等）</a><br/><br>Ref. 4 <a href="https://www.zybuluo.com/spiritnotes/note/288072" target="_blank" rel="noopener">常见距离公式</a><br/><br>Ref. 5 lijfrank /  <a href="https://blog.csdn.net/Frank_LJiang/article/details/102646649" target="_blank" rel="noopener">几种常见的距离计算公式</a><br/></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;​        前言：回想起来，距离第一次接触Machine Learning、做project、在组会上做分享，已经过了整整三年，前沿技术一直在发展，甚至YOLO之父 Joseph Redmon都宣布要退出CV界，而我的知识储备却并未增加。为了
+      
+    
+    </summary>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/categories/Machine-Learning/"/>
+    
+    
+      <category term="Machine Learning" scheme="icyhh.xyz/tags/Machine-Learning/"/>
+    
+      <category term="Algorithm" scheme="icyhh.xyz/tags/Algorithm/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>写在2020伊始</title>
+    <link href="icyhh.xyz/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/"/>
+    <id>icyhh.xyz/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/</id>
+    <published>2020-02-15T13:16:18.000Z</published>
+    <updated>2020-09-23T08:41:04.957Z</updated>
+    
+    <content type="html"><![CDATA[<p>​        时间飞逝，距离2017年元旦开始用hexo捣腾博客，已经过了三年。</p><p>​        鼠年开年不利，受疫情所困在家中老老实实地宅了一个月，工作之余意外有了很多安静反思的时间，便打算一鼓作气地将这个想了很久的个人知识体系建立起来，算是一个自我总结也是温故知新的过程。毕竟学到的越多，越觉察到自己一无所知。知识好比容量，球体的容积越大，表面积就越大，接触到的非球体范围内的未知就更甚。</p><p>​        种一棵树最好的时间是十年前，其次是现在。希望工作多年之后回望，会觉得这段时光没有白过，沉淀会结出一树繁花。</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;​        时间飞逝，距离2017年元旦开始用hexo捣腾博客，已经过了三年。&lt;/p&gt;
+&lt;p&gt;​        鼠年开年不利，受疫情所困在家中老老实实地宅了一个月，工作之余意外有了很多安静反思的时间，便打算一鼓作气地将这个想了很久的个人知识体系建立起来，算是一个自我总
+      
+    
+    </summary>
+    
+    
+      <category term="essay" scheme="icyhh.xyz/categories/essay/"/>
+    
+    
+  </entry>
+  
+</feed>

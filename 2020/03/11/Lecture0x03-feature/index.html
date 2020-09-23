@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Lecture0x03_feature engineering | Icy&#39;s wiki</title>
+    
+    
+        <meta name="keywords" content="Machine Learning" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="数据预处理与特征工程 思维导图直达：https:&#x2F;&#x2F;mubu.com&#x2F;doc&#x2F;5rWv4i8HggF  Data PreProcessing（数据预处理）1. 无量纲化   名称 适用场景 做法 公式 特点 缺点    标准化(Standardization) 1. 某些算法要求样本具有零均值和单位方差； 2.需要消除样本不同属性具有不同量级时的影响； 3.在分类、聚类算法中，需要使用距离来度量相">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lecture0x03_feature engineering">
+<meta property="og:url" content="icyhh.xyz/2020/03/11/Lecture0x03-feature/index.html">
+<meta property="og:site_name" content="Icy&#39;s wiki">
+<meta property="og:description" content="数据预处理与特征工程 思维导图直达：https:&#x2F;&#x2F;mubu.com&#x2F;doc&#x2F;5rWv4i8HggF  Data PreProcessing（数据预处理）1. 无量纲化   名称 适用场景 做法 公式 特点 缺点    标准化(Standardization) 1. 某些算法要求样本具有零均值和单位方差； 2.需要消除样本不同属性具有不同量级时的影响； 3.在分类、聚类算法中，需要使用距离来度量相">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/10.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/11.png?imageView2/format/webp">
+<meta property="article:published_time" content="2020-03-11T11:25:33.000Z">
+<meta property="article:modified_time" content="2020-09-23T08:41:04.956Z">
+<meta property="article:author" content="Icy">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://myimg.icyhh.xyz/ml/10.png?imageView2/format/webp">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="Icy&#39;s wiki" type="application/atom+xml" />
+    
+
+    
+        <link rel="icon" href="/favicon.ico" />
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Icy&#39;s wiki</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">首页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/categories">分类</a>
+                
+                    <a class="main-nav-link" href="/tags">标签</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">首页</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">归档</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">分类</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">标签</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">关于</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id='categories'>
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id='allExpand' href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree" > 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            DevOps
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/09/23/GitBranch-management/">关于持续交付中Git分支管理的思考</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Machine Learning
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/24/Lecture0x01-knn/">Lecture0x01_knn</a></li>  <li class="file"><a href="/2020/03/02/Lecture0x02-measurement/">Lecture0x02_measurement</a></li>  <li class="file active"><a href="/2020/03/11/Lecture0x03-feature/">Lecture0x03_feature engineering</a></li>  <li class="file"><a href="/2020/03/22/Lecture0x04-LinearRegression/">Lecture0x04_LinearRegression</a></li>  <li class="file"><a href="/2020/03/28/Lecture0x05-GradientDescent/">Lecture0x05_GradientDescent</a></li>  <li class="file"><a href="/2020/04/06/Lecture0x06-pipeline/">Lecture0x06_pipeline</a></li>  <li class="file"><a href="/2020/04/12/Lecture0x07-LogisticRegression/">Lecture0x07_LogisticRegression</a></li>  <li class="file"><a href="/2020/04/19/Lecture0x08-DecisionTree/">Lecture0x08_DecisionTree</a></li>  <li class="file"><a href="/2020/04/26/Lecture0x09-PCA/">Lecture0x09-PCA</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            essay
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/">写在2020伊始</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/2020/05/04/Lecture0x10-SVM/">Lecture0x10_SVM</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Lecture0x03-feature" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Machine-Learning/">Machine Learning</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2020/03/11/Lecture0x03-feature/">
+            <time datetime="2020-03-11T11:25:33.000Z" itemprop="datePublished">2020-03-11</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/raw/writing/source/_posts/Lecture0x03-feature.md' target="_blank" rel="noopener"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/edit/writing/source/_posts/Lecture0x03-feature.md' target="_blank" rel="noopener"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/commits/writing/source/_posts/Lecture0x03-feature.md' target="_blank" rel="noopener"> History </a>
+                            </div>
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Lecture0x03_feature engineering
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#数据预处理与特征工程"><span class="toc-number">1.</span> <span class="toc-text">数据预处理与特征工程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Data-PreProcessing（数据预处理）"><span class="toc-number">1.1.</span> <span class="toc-text">Data PreProcessing（数据预处理）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-无量纲化"><span class="toc-number">1.1.1.</span> <span class="toc-text">1. 无量纲化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#总结"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-特征分桶"><span class="toc-number">1.1.2.</span> <span class="toc-text">2. 特征分桶</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#无监督分箱法"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">无监督分箱法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#有监督分箱法"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">有监督分箱法</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结-1"><span class="toc-number">1.1.3.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-统计变换"><span class="toc-number">1.1.4.</span> <span class="toc-text">3. 统计变换</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Log变换"><span class="toc-number">1.1.4.1.</span> <span class="toc-text">Log变换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Box-Cox变换"><span class="toc-number">1.1.4.2.</span> <span class="toc-text">Box-Cox变换</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-特征编码"><span class="toc-number">1.1.5.</span> <span class="toc-text">4. 特征编码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结-2"><span class="toc-number">1.1.6.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Feature-Extraction（特征提取）"><span class="toc-number">1.2.</span> <span class="toc-text">Feature Extraction（特征提取）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Feature-Selection（特征选择）"><span class="toc-number">1.3.</span> <span class="toc-text">Feature Selection（特征选择）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Feature-construction（特征构造）"><span class="toc-number">1.4.</span> <span class="toc-text">Feature construction（特征构造）</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#附录"><span class="toc-number">2.</span> <span class="toc-text">附录</span></a></li></ol>
+                </div>
+            
+        
+        
+            <h1 id="数据预处理与特征工程"><a href="#数据预处理与特征工程" class="headerlink" title="数据预处理与特征工程"></a>数据预处理与特征工程</h1><ul>
+<li>思维导图直达：<a href="https://mubu.com/doc/5rWv4i8HggF" target="_blank" rel="noopener">https://mubu.com/doc/5rWv4i8HggF</a></li>
+</ul>
+<h2 id="Data-PreProcessing（数据预处理）"><a href="#Data-PreProcessing（数据预处理）" class="headerlink" title="Data PreProcessing（数据预处理）"></a>Data PreProcessing（数据预处理）</h2><h3 id="1-无量纲化"><a href="#1-无量纲化" class="headerlink" title="1. 无量纲化"></a>1. 无量纲化</h3><table>
+<thead>
+<tr>
+<th><strong>名称</strong></th>
+<th>适用场景</th>
+<th>做法</th>
+<th><strong>公式</strong></th>
+<th><strong>特点</strong></th>
+<th><strong>缺点</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>标准化(Standardization)</td>
+<td>1. 某些算法要求样本具有<strong>零均值和单位方差</strong>； 2.需要消除样本不同属性具有<strong>不同量级</strong>时的影响； 3.在分类、聚类算法中，需要使用距离来度量相似性的时候（如SVM、KNN），或者使用PCA技术进行降维的时候，Z-score表现更好。</td>
+<td>基于原始数据的均值（mean）和标准差（standard deviation）进行数据的标准化。</td>
+<td>$$x’ =  \frac{x-\mu}{\sigma} $$其中 $\mu = \frac{1}{N} \sum_{i=1}^{N}x_i$ $\sigma = \sqrt{\frac{1}{N}\sum_{i=1}^{N}}$</td>
+<td>简单，容易计算，Z-Score能够应用于数值型的数据，并且不受数据量级的影响。标准化只是调整特征整体的分布。</td>
+<td>1.对于数据的分布有一定的要求，正态分布是最有利于Z-Score计算的 2.Z-Score消除了数据具有的实际意义，因此Z-Score的结果只能用于比较数据间的结果，关注数据的真实意义还需要还原其原值 3.如果存在异常值，则无法保证平衡的特征尺度。</td>
+</tr>
+<tr>
+<td>MinMax归一化(Normalization)</td>
+<td>1.归一化有可能提高精度——数量级的差异将导致量级较大的属性占据主导地位，但实际情况有可能是值域范围小的特征更重要；</td>
+<td>区间缩放法利用了边界值信息，将属性缩放到[0,1]。</td>
+<td>$$x’ =  \frac{x-Min}{Max-Min} $$</td>
+<td>归一化输出在[0,1]或[-1,1]之间；如果数据较为稳定，不存在极端的最大最小值，用归一化。</td>
+<td>1.当有新数据加入时，可能导致max和min的变化，需要重新定义；</td>
+</tr>
+<tr>
+<td>MaxAbs归一化(Normalization)</td>
+<td>2.数量级的差异将导致迭代收敛速度减慢——当使用梯度下降法寻求最优解时，很有可能走“之字型”路线（垂直等高线走），从而导致需要迭代很多次才能收敛；3.依赖于<strong>样本距离</strong>的算法对于数据的数量级非常敏感，务必归一化。</td>
+<td>单独地缩放和转换每个特征，使得训练集中的每个特征的最大绝对值将为1.0，将属性缩放到[-1,1]。它不会移动/居中数据，因此不会破坏任何稀疏性。</td>
+<td>$$x’ =  \frac{x}{</td>
+<td>Max</td>
+<td>} $$</td>
+</tr>
+<tr>
+<td>正态分布化</td>
+<td>1.将每个样本缩放到单位范数(每个样本的范数为1)，如果要使用如二次型(点积)或者其它核方法计算两个样本之间的相似性，这个方法会很有用。2.该方法是文本分类和聚类分析中经常使用的——向量空间模型（Vector Space Model)的——基础。</td>
+<td>对每个样本计算其$L_{p}$范数，然后对该样本中每个元素<strong>除以该范数</strong>，这样处理的结果是使得每个处理后样本的$L_{p}$ 范数(L1-norm, L2-norm)等于1。</td>
+<td>$$x’ =  \frac{x}{L_{2}-norm } $$</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>$L_{p}$范数：</strong></p>
+<ul>
+<li>在线性代数，函数分析等数学分支中，范数（Norm）是一个函数，其赋予某个向量空间（或矩阵）中的每个向量以长度或大小。</li>
+</ul>
+<ol>
+<li><p>$L_{0}-norm$ </p>
+<p>$||w||<em>{0} = num(i)$   $with$    $ x</em>{i}  \neq 0 $ （表示向量中所有非零元素的个数）</p>
+</li>
+<li><p>$L_{1}-norm$ </p>
+<p>$$||w||<em>{1} = \sum</em>{1}^{d}|x_i| $$ （表示每个元素的绝对值之和）</p>
+</li>
+<li><p>$L_{2}-norm$ </p>
+<p>$$||w||<em>{2} = \sqrt{\sum</em>{i=1}^{d}(x_j)^2} $$  （欧氏距离）</p>
+</li>
+<li><p>$L_{p}-norm$ </p>
+<p>$$||w||<em>{p} = ({\sum</em>{i=1}^{d}x_j^p})^{\frac{1}{p}} $$  </p>
+</li>
+<li><p>$L_{max}-norm$ （对象属性之间的最大距离，）</p>
+<p>$$||w||_{\infty} = max（│x_1│，│x_2│，…，│x_n│）$$</p>
+</li>
+</ol>
+<p>可以看到sklearn中对「正态分布化」的实现细节：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">if norm &#x3D;&#x3D; &#39;l1&#39;:</span><br><span class="line">    norms &#x3D; np.abs(X).sum(axis&#x3D;1)</span><br><span class="line">elif norm &#x3D;&#x3D; &#39;l2&#39;:</span><br><span class="line">    norms &#x3D; row_norms(X)</span><br><span class="line">elif norm &#x3D;&#x3D; &#39;max&#39;:</span><br><span class="line">    norms &#x3D; np.max(X, axis&#x3D;1)</span><br><span class="line">norms &#x3D; _handle_zeros_in_scale(norms, copy&#x3D;False)</span><br><span class="line">X &#x2F;&#x3D; norms[:, np.newaxis]</span><br></pre></td></tr></table></figure>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ul>
+<li>一般来说，建议优先使用标准化。对于输出有要求时再尝试别的方法，很多方法都可以将输出范围调整到[0, 1]；如果我们对于数据的分布有假设的话，更加有效的方法是使用相对应的概率密度函数来转换。</li>
+<li>如果数据存在异常值和较多噪音，用标准化，可以间接通过中心化避免异常值和极端值的影响。</li>
+<li>除了上面介绍的方法外，还有一些相对没这么常用的处理方法：RobustScaler、PowerTransformer、QuantileTransformer和QuantileTransformer等。</li>
+</ul>
+<h3 id="2-特征分桶"><a href="#2-特征分桶" class="headerlink" title="2. 特征分桶"></a>2. 特征分桶</h3><p>——即数据离散化，将数值型特征特征分箱。</p>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>离散化后的特征对异常数据有很强的鲁棒性（过分远离的特征也可落入其中一个分类）；</li>
+<li>对于线性模型，表达能力受限；单变量离散化为N个后，每个变量有单独的权重，相当于模型引入了非线性，能够提升模型表达能力，加大拟合；</li>
+<li>离散化后可以进行特征交叉，由M+N个变量变为M*N个变量，进一步引入非线性，提升表达能力；</li>
+<li>特征离散化后，模型会更稳定（比如如果对用户年龄离散化，20-30作为一个区间，不会因为一个用户年龄长了一岁就变成一个完全不同的人；当然处于区间相邻处的样本会刚好相反，所以怎么划分区间是门学问）；</li>
+<li>特征离散化以后，起到了简化了逻辑回归模型的作用，降低了模型过拟合的风险；</li>
+<li>可以将缺失作为独立的一类带入模型；</li>
+<li>将所有变量变换到相似的尺度上。</li>
+</ul>
+<h4 id="无监督分箱法"><a href="#无监督分箱法" class="headerlink" title="无监督分箱法"></a>无监督分箱法</h4><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>做法</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>等距分箱</td>
+<td>按照相同宽度将数据分成几等份。</td>
+<td>受到异常值的影响比较大。</td>
+</tr>
+<tr>
+<td>等频分享</td>
+<td>将数据分成几等份，每等份数据里面的个数是一样的。</td>
+<td></td>
+</tr>
+<tr>
+<td>聚类分箱</td>
+<td>基于k均值聚类的分箱：k均值聚类法将观测值聚为k类，但在聚类过程中需要保证分箱的有序性：第一个分箱中所有观测值都要小于第二个分箱中的观测值，第二个分箱中所有观测值都要小于第三个分箱中的观测值，等等。</td>
+<td></td>
+</tr>
+<tr>
+<td>二值化</td>
+<td>二值化可以将数值型（numerical）的feature进行阀值化得到boolean型数据。这对于下游的概率估计来说可能很有用（比如：数据分布为Bernoulli分布时）。</td>
+<td>$$ x’ = \left{ \begin{aligned} 1, &amp;  &amp; x&gt;threshold \ 0, &amp;  &amp; x \leq threshold \end{aligned} \right.{ }$$</td>
+</tr>
+</tbody></table>
+<h4 id="有监督分箱法"><a href="#有监督分箱法" class="headerlink" title="有监督分箱法"></a>有监督分箱法</h4><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>做法</th>
+<th>主要思想</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>卡方分箱法</td>
+<td>自底向上的（基于合并的）数据离散化方法。它依赖于卡方检验：具有最小卡方值的相邻区间合并在一起，直到满足确定的停止准则。</td>
+<td>对于精确的离散化，相对类频率在一个区间内应当完全一致。因此,如果两个相邻的区间具有非常类似的类分布，则这两个区间可以合并；否则，它们应当保持分开。而低卡方值表明它们具有相似的类分布。</td>
+</tr>
+<tr>
+<td>最小熵法分箱</td>
+<td>分箱使总熵值达到最小，也就是能够<strong>最大限度地</strong>区分因变量的各类别（类间差异最大，类内差异最小）。</td>
+<td><strong>熵</strong>是信息论中数据无序程度的度量标准，提出信息熵的基本目的是找出某种符号系统的信息量和冗余度之间的关系，以便能用最小的成本和消耗来实现最高效率的数据存储、管理和传递。</td>
+</tr>
+</tbody></table>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>我们对特征进行分箱后，需要对分箱后的每组（箱）进行woe编码和IV值的计算，通过IV值进行变量筛选后，然后才能放进模型训练。</li>
+<li>分箱后需要进行特征编码，如：LabelEncode、OneHotEncode或LabelBinarizer等。</li>
+</ul>
+<h3 id="3-统计变换"><a href="#3-统计变换" class="headerlink" title="3. 统计变换"></a>3. 统计变换</h3><ul>
+<li>数据分布的倾斜有很多负面的影响。我们可以使用特征工程技巧，利用统计或数学变换来减轻数据分布倾斜的影响。使原本密集的区间的值尽可能的分散，原本分散的区间的值尽量的聚合。</li>
+<li>这些变换函数都属于<strong>幂变换</strong>函数簇，通常用来创建单调的数据变换。它们的主要作用在于它能帮助稳定方差，始终保持分布接近于正态分布并使得数据与分布的平均值无关。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>作用</th>
+<th>公式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Log变换</td>
+<td>Log变换通常用来创建<strong>单调的数据变</strong>换。</td>
+<td>$$y = log_b{x}$$</td>
+</tr>
+<tr>
+<td>Box-Cox变换</td>
+<td>Box-Cox变换的主要特点是引入一个参数，通过数据本身估计该参数进而确定应采取的数据变换形式。</td>
+<td>$$ f(x, \lambda) = x^\lambda \left{ \begin{aligned} \frac{x^\lambda - 1}{\lambda}, &amp;  &amp; for \lambda &gt; 0 \ log_e(x), &amp;  &amp; for \lambda = 0 \end{aligned} \right.{ }$$λ 的最佳取值通常由最大似然或最大对数似然确定。</td>
+</tr>
+</tbody></table>
+<h4 id="Log变换"><a href="#Log变换" class="headerlink" title="Log变换"></a>Log变换</h4><ul>
+<li>它的主要作用在于帮助<strong>稳定方差</strong>，始终保持分布接近于正态分布并<strong>使得数据与分布的平均值无关</strong>。Log变换倾向于<strong>拉伸那些落在较低的幅度范围内</strong>自变量值的范围，倾向于压缩或减少更高幅度范围内的自变量值的范围。从而使得倾斜分布尽可能的接近正态分布。 </li>
+</ul>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>针对一些数值连续特征的方差不稳定，特征值<strong>重尾分布</strong>我们需要采用Log化来调整整个数据分布的方差，属于方差稳定型数据转换。比如在词频统计中，有些介词的出现数量远远高于其他词，这种词频分布的特征就会现有些词频特征值极不协调的状况，拉大了整个数据分布的方差。这个时候，可以考虑Log化。尤其在<strong>分本分析领域，时间序列分析领域</strong>，Log化非常常见, 其目标是让方差稳定，把目标关注在其波动之上。<img src="http://myimg.icyhh.xyz/ml/10.png?imageView2/format/webp" >
+
+</li>
+</ul>
+<h4 id="Box-Cox变换"><a href="#Box-Cox变换" class="headerlink" title="Box-Cox变换"></a>Box-Cox变换</h4><ul>
+<li>Box-Cox变换是Box和Cox在1964年提出的一种广义幂变换方法，是统计建模中常用的一种数据变换，用于连续的响应变量不满足正态分布的情况。 </li>
+<li>该函数有一个前提条件，即数值型值必须先变换为正数（与 log 变换所要求的一样）。万一出现数值是负的，使用一个常数对数值进行偏移是有帮助的。</li>
+</ul>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>Box-Cox变换之后，可以一定程度上减小不可观测的误差和预测变量的相关性。Box-Cox变换可以明显地<strong>改善数据的正态性、对称性和方差相等性</strong>，对许多实际数据都是行之有效的。</li>
+</ul>
+<img src="http://myimg.icyhh.xyz/ml/11.png?imageView2/format/webp" >
+
+<h3 id="4-特征编码"><a href="#4-特征编码" class="headerlink" title="4. 特征编码"></a>4. 特征编码</h3><ul>
+<li>在统计学中，分类特征是可以采用有限且通常固定数量的可能值之一的变量，基于某些定性属性将每个个体或其他观察单元分配给特定组或名义类别。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>定义</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>标签编码（LabelEncode）</td>
+<td>对不连续的数字或者文本进行编号，编码值介于0和n_classes-1之间的标签。</td>
+<td>占用内存空间小，并且支持文本特征编码。</td>
+<td>它隐含了一个假设：不同的类别之间，存在一种顺序关系。在具体的代码实现里，LabelEncoder会对定性特征列中的所有独特数据进行一次排序，从而得出从原始输入到整数的映射。所以目前还没有发现标签编码的广泛使用，一般在树模型中可以使用。</td>
+</tr>
+<tr>
+<td>独热编码（OneHotEncode）</td>
+<td>用于将表示分类的数据<strong>扩维</strong>。</td>
+<td>因为大部分算法是基于向量空间中的度量来进行计算的，用独热编码能使非偏序关系的变量取值<strong>不具有偏序性</strong>，并且到圆点是等距的。</td>
+<td>1.只能对数值型变量二值化，无法直接对字符串型的类别变量编码。2.当类别的数量很多时，特征空间会变得非常大。在这种情况下，一般可以用PCA来减少维度。而且one hot encoding+PCA这种组合在实际中也非常有用。</td>
+</tr>
+<tr>
+<td>平均数编码（mean encoding）</td>
+<td></td>
+<td>如果某一个特征是定性的（categorical），而这个特征的可能值非常多（高基数），那么平均数编码（mean encoding）是一种高效的编码方式。在实际应用中，这类特征工程能极大提升模型的性能。</td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><p>由于树模型（Random Forest、GBDT、xgboost等）对特征数值幅度不敏感，可以不进行无量纲化和统计变换处理；</p>
+</li>
+<li><p>依赖<u>样本距离</u>来学习的模型（如线性回归、SVM、深度学习等）</p>
+</li>
+<li><ul>
+<li>对于数值型特征需要进行无量纲化处理；</li>
+<li>对于一些<u>长尾分布</u>的数据特征，可以做统计变换，使得模型能更好优化；</li>
+<li>对于<u>线性模型</u>，特征分箱可以提升模型表达能力；</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>对数值型特征进行特征分箱可以让模型对异常数据有很强的鲁棒性，模型也会更稳定；分箱后也需要进行特征编码。</li>
+</ul>
+<h2 id="Feature-Extraction（特征提取）"><a href="#Feature-Extraction（特征提取）" class="headerlink" title="Feature Extraction（特征提取）"></a>Feature Extraction（特征提取）</h2><h2 id="Feature-Selection（特征选择）"><a href="#Feature-Selection（特征选择）" class="headerlink" title="Feature Selection（特征选择）"></a>Feature Selection（特征选择）</h2><h2 id="Feature-construction（特征构造）"><a href="#Feature-construction（特征构造）" class="headerlink" title="Feature construction（特征构造）"></a>Feature construction（特征构造）</h2><h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 木东居士 / <a href="https://mp.weixin.qq.com/s/qWO9zgKyntvyWfftpGqrHQ" target="_blank" rel="noopener">​特征工程系列：特征预处理（上）</a> &amp; <a href="https://mp.weixin.qq.com/s/r9AT6FbWGVP3fORn3FeEvg" target="_blank" rel="noopener">特征工程系列：特征预处理（下）</a></p>
+<p>Ref. 2 木东居士 / <a href="https://mp.weixin.qq.com/s?__biz=MzI4MjkzNTUxMw==&mid=2247483857&idx=3&sn=5a4573e5fe074241a45f6affb969448f" target="_blank" rel="noopener">机器学习的敲门砖：归一化与KD树</a></p>
+<p>Ref. 3 是安酱和菜菜呀 / <a href="https://www.cnblogs.com/juanjiang/archive/2019/05/30/10948849.html" target="_blank" rel="noopener">sklearn中的数据预处理和特征工程</a></p>
+<p>Ref.4 Dave / <a href="https://zhuanlan.zhihu.com/p/29957294" target="_blank" rel="noopener">ML 入门：归一化、标准化和正则化</a></p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/2020/03/22/Lecture0x04-LinearRegression/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Lecture0x04_LinearRegression
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2020/03/02/Lecture0x02-measurement/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Lecture0x02_measurement</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Icy &copy; 2020 
+            <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a>
+            <br> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme - <a href="https://github.com/zthxxx/hexo-theme-Wikitten" target="_blank" rel="noopener">wikitten</a>
+            
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+            
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>

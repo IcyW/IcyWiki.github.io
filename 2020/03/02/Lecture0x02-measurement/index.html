@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Lecture0x02_measurement | Icy&#39;s wiki</title>
+    
+    
+        <meta name="keywords" content="Machine Learning" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="1. 回归模型中的指标选择评判指标一览 在预测任务中，给定样例集$D &#x3D; {(x_1, y_1), (x_2, y_2),…,(x_n,y_n)}$，其中$y_i$是样本$x_i$的真实的观测值，$n$表示样本数量，$f(x_i)$代表对样本$x_i$的预测值。     名称 中文 特点 公式 优劣    Mean Absolute Error（MAE） 平均绝对误差 $$[0, +\infty)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lecture0x02_measurement">
+<meta property="og:url" content="icyhh.xyz/2020/03/02/Lecture0x02-measurement/index.html">
+<meta property="og:site_name" content="Icy&#39;s wiki">
+<meta property="og:description" content="1. 回归模型中的指标选择评判指标一览 在预测任务中，给定样例集$D &#x3D; {(x_1, y_1), (x_2, y_2),…,(x_n,y_n)}$，其中$y_i$是样本$x_i$的真实的观测值，$n$表示样本数量，$f(x_i)$代表对样本$x_i$的预测值。     名称 中文 特点 公式 优劣    Mean Absolute Error（MAE） 平均绝对误差 $$[0, +\infty)">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/09.png?imageView2/format/webp">
+<meta property="og:image" content="http://myimg.icyhh.xyz/ml/08.png?imageView2/format/webp">
+<meta property="article:published_time" content="2020-03-02T15:52:03.000Z">
+<meta property="article:modified_time" content="2020-09-23T08:41:04.955Z">
+<meta property="article:author" content="Icy">
+<meta property="article:tag" content="Machine Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://myimg.icyhh.xyz/ml/09.png?imageView2/format/webp">
+    
+
+    
+        <link rel="alternate" href="/atom.xml" title="Icy&#39;s wiki" type="application/atom+xml" />
+    
+
+    
+        <link rel="icon" href="/favicon.ico" />
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/open-sans/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    
+<script src="/libs/jquery/plugins/cookie/1.4.1/jquery.cookie.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Icy&#39;s wiki</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">首页</a>
+                
+                    <a class="main-nav-link" href="/archives">归档</a>
+                
+                    <a class="main-nav-link" href="/categories">分类</a>
+                
+                    <a class="main-nav-link" href="/tags">标签</a>
+                
+                    <a class="main-nav-link" href="/about">关于</a>
+                
+            </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">首页</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">归档</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">分类</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">标签</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">关于</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap" id='categories'>
+        <h3 class="widget-title">
+            <span>categories</span>
+            &nbsp;
+            <a id='allExpand' href="#">
+                <i class="fa fa-angle-double-down fa-2x"></i>
+            </a>
+        </h3>
+        
+        
+        
+         <ul class="unstyled" id="tree" > 
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            DevOps
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/09/23/GitBranch-management/">关于持续交付中Git分支管理的思考</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory open">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder-open"></i>
+                            &nbsp;
+                            Machine Learning
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/24/Lecture0x01-knn/">Lecture0x01_knn</a></li>  <li class="file active"><a href="/2020/03/02/Lecture0x02-measurement/">Lecture0x02_measurement</a></li>  <li class="file"><a href="/2020/03/11/Lecture0x03-feature/">Lecture0x03_feature engineering</a></li>  <li class="file"><a href="/2020/03/22/Lecture0x04-LinearRegression/">Lecture0x04_LinearRegression</a></li>  <li class="file"><a href="/2020/03/28/Lecture0x05-GradientDescent/">Lecture0x05_GradientDescent</a></li>  <li class="file"><a href="/2020/04/06/Lecture0x06-pipeline/">Lecture0x06_pipeline</a></li>  <li class="file"><a href="/2020/04/12/Lecture0x07-LogisticRegression/">Lecture0x07_LogisticRegression</a></li>  <li class="file"><a href="/2020/04/19/Lecture0x08-DecisionTree/">Lecture0x08_DecisionTree</a></li>  <li class="file"><a href="/2020/04/26/Lecture0x09-PCA/">Lecture0x09-PCA</a></li>  </ul> 
+                    </li> 
+                    
+                    <li class="directory">
+                        <a href="#" data-role="directory">
+                            <i class="fa fa-folder"></i>
+                            &nbsp;
+                            essay
+                        </a>
+                         <ul class="unstyled" id="tree" >  <li class="file"><a href="/2020/02/15/%E5%86%99%E5%9C%A82020%E4%BC%8A%E5%A7%8B/">写在2020伊始</a></li>  </ul> 
+                    </li> 
+                     <li class="file"><a href="/2020/05/04/Lecture0x10-SVM/">Lecture0x10_SVM</a></li>  </ul> 
+    </div>
+    <script>
+        $(document).ready(function() {
+            var iconFolderOpenClass  = 'fa-folder-open';
+            var iconFolderCloseClass = 'fa-folder';
+            var iconAllExpandClass = 'fa-angle-double-down';
+            var iconAllPackClass = 'fa-angle-double-up';
+            // Handle directory-tree expansion:
+            // 左键单独展开目录
+            $(document).on('click', '#categories a[data-role="directory"]', function (event) {
+                event.preventDefault();
+
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var subtree = $(this).siblings('ul');
+                icon.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if (expanded) {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideUp({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderCloseClass);
+                } else {
+                    if (typeof subtree != 'undefined') {
+                        subtree.slideDown({ duration: 100 });
+                    }
+                    icon.addClass(iconFolderOpenClass);
+                }
+            });
+            // 右键展开下属所有目录
+            $('#categories a[data-role="directory"]').bind("contextmenu", function(event){
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconFolderOpenClass);
+                var listNode = $(this).siblings('ul');
+                var subtrees = $.merge(listNode.find('li ul'), listNode);
+                var icons = $.merge(listNode.find('.fa'), icon);
+                icons.removeClass(iconFolderOpenClass).removeClass(iconFolderCloseClass);
+                if(expanded) {
+                    subtrees.slideUp({ duration: 100 });
+                    icons.addClass(iconFolderCloseClass);
+                } else {
+                    subtrees.slideDown({ duration: 100 });
+                    icons.addClass(iconFolderOpenClass);
+                }
+            })
+            // 展开关闭所有目录按钮
+            $(document).on('click', '#allExpand', function (event) {
+                event.preventDefault();
+                
+                var icon = $(this).children('.fa');
+                var expanded = icon.hasClass(iconAllExpandClass);
+                icon.removeClass(iconAllExpandClass).removeClass(iconAllPackClass);
+                if(expanded) {
+                    $('#sidebar .fa.fa-folder').removeClass('fa-folder').addClass('fa-folder-open')
+                    $('#categories li ul').slideDown({ duration: 100 });
+                    icon.addClass(iconAllPackClass);
+                } else {
+                    $('#sidebar .fa.fa-folder-open').removeClass('fa-folder-open').addClass('fa-folder')
+                    $('#categories li ul').slideUp({ duration: 100 });
+                    icon.addClass(iconAllExpandClass);
+                }
+            });  
+        });
+    </script>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+            <section id="main"><article id="post-Lecture0x02-measurement" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+                    <div class="article-meta">
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/Machine-Learning/">Machine Learning</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a>
+    </div>
+
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2020/03/02/Lecture0x02-measurement/">
+            <time datetime="2020-03-02T15:52:03.000Z" itemprop="datePublished">2020-03-02</time>
+        </a>
+    </div>
+
+
+                        
+                            <i class="fa fa-bar-chart"></i>
+                            <span id="busuanzi_container_site_pv"><span id="busuanzi_value_page_pv"></span></span>    
+                        
+                        
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/raw/writing/source/_posts/Lecture0x02-measurement.md' target="_blank" rel="noopener"> Source </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/edit/writing/source/_posts/Lecture0x02-measurement.md' target="_blank" rel="noopener"> Edit </a>
+                            </div>
+                            <div class="article-meta-button">
+                                <a href='https://github.com/Icy/Wiki-site/commits/writing/source/_posts/Lecture0x02-measurement.md' target="_blank" rel="noopener"> History </a>
+                            </div>
+                        
+                    </div>
+                
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Lecture0x02_measurement
+        </h1>
+    
+
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-回归模型中的指标选择"><span class="toc-number">1.</span> <span class="toc-text">1. 回归模型中的指标选择</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#评判指标一览"><span class="toc-number">1.1.</span> <span class="toc-text">评判指标一览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于-R-2-的深入了解"><span class="toc-number">1.2.</span> <span class="toc-text">关于$R^2$的深入了解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#R-2-的公式推导"><span class="toc-number">1.2.1.</span> <span class="toc-text">$R^2$的公式推导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#R-2-的理解"><span class="toc-number">1.2.2.</span> <span class="toc-text">$R^2$的理解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#R-2-的运用："><span class="toc-number">1.2.3.</span> <span class="toc-text">$R^2$的运用：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其他注意事项"><span class="toc-number">1.3.</span> <span class="toc-text">其他注意事项</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-分类模型中的指标选择"><span class="toc-number">2.</span> <span class="toc-text">2. 分类模型中的指标选择</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#混淆矩阵（confusion-matrix）"><span class="toc-number">2.1.</span> <span class="toc-text">混淆矩阵（confusion_matrix）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#指标"><span class="toc-number">2.2.</span> <span class="toc-text">指标</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#accuracy、precision、recall、F1"><span class="toc-number">2.2.1.</span> <span class="toc-text">accuracy、precision、recall、F1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#P-R曲线"><span class="toc-number">2.2.2.</span> <span class="toc-text">P-R曲线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ROC曲线"><span class="toc-number">2.2.3.</span> <span class="toc-text">ROC曲线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#曲线选择"><span class="toc-number">2.2.4.</span> <span class="toc-text">曲线选择</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#附录"><span class="toc-number">3.</span> <span class="toc-text">附录</span></a></li></ol>
+                </div>
+            
+        
+        
+            <h1 id="1-回归模型中的指标选择"><a href="#1-回归模型中的指标选择" class="headerlink" title="1. 回归模型中的指标选择"></a>1. 回归模型中的指标选择</h1><h2 id="评判指标一览"><a href="#评判指标一览" class="headerlink" title="评判指标一览"></a>评判指标一览</h2><ul>
+<li>在预测任务中，给定样例集$D = {(x_1, y_1), (x_2, y_2),…,(x_n,y_n)}$，其中$y_i$是样本$x_i$的真实的观测值，$n$表示样本数量，$f(x_i)$代表对样本$x_i$的预测值。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>中文</th>
+<th>特点</th>
+<th>公式</th>
+<th>优劣</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mean Absolute Error（MAE）</td>
+<td>平均绝对误差</td>
+<td>$$[0, +\infty)$$误差越小越好。也即L1损失。</td>
+<td>$$MAE =\frac{1}{n}\sum_{i=0}^{n}{</td>
+<td>y_i - f(x_i)</td>
+</tr>
+<tr>
+<td>Mean Absolute Pencentage Error (MAPE）</td>
+<td>平均绝对百分比误差</td>
+<td>$$[0, +\infty)$$误差越小越好。加权版的MAE</td>
+<td>$$MAPE = \frac{1}{n}\sum_{i=0}^{n}</td>
+<td>\frac{y_i - f(x_i)}{y_i}</td>
+</tr>
+<tr>
+<td>Mean Squared Error/Deviation（MSE/D）</td>
+<td>均方误差</td>
+<td>$$[0, +\infty)$$误差越小越好。也即L2损失。</td>
+<td>$$MSE = \frac{1}{n}\sum_{i=0}^{n}(f(x_i)-y_i)^2$$</td>
+<td>更易受到极端值影响</td>
+</tr>
+<tr>
+<td>Root Mean Square Error/Deviation（RMSE/D）</td>
+<td>均方根误差</td>
+<td>$$[0, +\infty)$$误差越小越好。MSE开根号</td>
+<td>$$RMSE = \sqrt{\frac{1}{n}\sum_{i=0}^{n}(f(x_i)-y_i)^2}$$</td>
+<td>容易受到极端值影响</td>
+</tr>
+<tr>
+<td>Normalized Root Mean Square Error（NRMSE）</td>
+<td>归一化的均方根误差</td>
+<td>$$(-\infty, 1]$$误差越小越好。归一化的RMSE</td>
+<td>$$NRMSE = \frac{RMSE}{y_{max}-y_{min}}$$</td>
+<td>容易受到极端值影响</td>
+</tr>
+<tr>
+<td>Coefficient of determination （R squared）</td>
+<td>决定系数</td>
+<td>$$[0, 1]$$反映因变量的全部变异能通过回归关系被自变量解释的比例，越大越好。</td>
+<td>$$R^2=1-1 - \frac{\sum\limits_i(y_i - f(x_i))^2 }{\sum\limits_i(y_i - \bar{y})^2}$$</td>
+<td>考虑了预测值与真值之间的差异&amp;问题本身真值之间的差异；归一化的度量标准</td>
+</tr>
+</tbody></table>
+<h2 id="关于-R-2-的深入了解"><a href="#关于-R-2-的深入了解" class="headerlink" title="关于$R^2$的深入了解"></a>关于$R^2$的深入了解</h2><h3 id="R-2-的公式推导"><a href="#R-2-的公式推导" class="headerlink" title="$R^2$的公式推导"></a>$R^2$的公式推导</h3><ul>
+<li>搞清楚R2_score计算之前，我们还需要了解几个统计学概念。若用$y_i$表示真实的观测值，用$\bar{y}$表示真实观测值的平均值，用$\hat{y_i}$表示预测值,则：</li>
+</ul>
+<p><strong>1、回归平方和：SSR</strong></p>
+<p>$$SSR = \sum_{i=1}^{n}(\hat{y_i} - \bar{y})^2$$</p>
+<p>即估计值与平均值的误差，反映<strong>自变量与因变量之间的相关程度</strong>的偏差平方和。</p>
+<p><strong>2、残差平方和：SSE</strong></p>
+<p>$$SSE = \sum_{i=1}^{n}(y_i-\hat{y_i} )^2$$</p>
+<p>即估计值与真实值的误差，反映<strong>模型拟合程度</strong>。</p>
+<p><strong>3、总离差平方和：SST</strong><br>$$SST =SSR + SSE= \sum_{i=1}^{n}(y_i - \bar{y})^2$$</p>
+<p>即<strong>平均值与真实值的误差</strong>，反映与数学期望的偏离程度。</p>
+<p>$$R^2=1-\frac{SSE}{SST} = 1 - \frac{\sum\limits_i(y_i - \hat{y_i})^2 / n}{\sum\limits_i(y_i - \bar{y})^2 / n} = 1 - \frac{MSE}{Var}$$<br>分子就变成了常用的评价指标均方误差MSE，分母就变成了方差。</p>
+<h3 id="R-2-的理解"><a href="#R-2-的理解" class="headerlink" title="$R^2$的理解"></a>$R^2$的理解</h3><ul>
+<li><p>对于$R^2$可以通俗地理解为<strong>使用均值作为误差基准，看预测误差是否大于或者小于均值基准误差。</strong></p>
+<blockquote>
+<p> R2_score = 1，样本中预测值和真实值完全相等，没有任何误差，表示回归分析中自变量对因变量的解释越好，也表示我们的预测模型不犯任何错误。<br> R2_score = 0。此时分子等于分母，样本的每项预测值都等于均值。</p>
+<p> 如果R2_score &lt; 0，说明我们学习到的模型还不如基准模型（样本均值）。很有可能我们的数据不存在任何线性关系。</p>
+<p> R2_score不是R的平方，也可能为负数(分子&gt;分母)，模型等于盲猜，还不如直接计算目标变量的平均值。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="R-2-的运用："><a href="#R-2-的运用：" class="headerlink" title="$R^2$的运用："></a>$R^2$的运用：</h3><p>  1、$R^2$ 一般用在线性模型中（非线性模型也可以用）<br>  2、$R^2$不能完全反映模型预测能力的高低，假如某个实际观测的<u>自变量取值范围很窄</u>，此时所建模型的$R^2$ 会较大，但这并不代表模型在外推应用时的效果肯定会很好。<br>  3、数据集的样本越大，$R^2$越大，因此，不同数据集的模型结果比较会有一定的误差，此时可以使用Adjusted R-Square (校正决定系数），能对添加的非显著变量给出惩罚:</p>
+<p>  $R^2_{\text{Adj}}=1-(1-R^2)\frac{n-p-1}{n-1}$ ，其中n是样本的个数，p是变量的个数</p>
+<h2 id="其他注意事项"><a href="#其他注意事项" class="headerlink" title="其他注意事项"></a>其他注意事项</h2><ul>
+<li>在选用评价指标时，需要考虑：<ol>
+<li>真实观测值数据中是否有0 ，如果有0值就不能用MPE、MAPE之类的指标；</li>
+<li>数据的分布如何 ，如果是<strong>长尾分布可以选择带对数变换的指标</strong>，中位数指标比平均数指标更好；</li>
+<li>是否存在极端值 ，诸如MAE、MSE、RMSE之类容易受到极端值影响的指标就不要选用；</li>
+<li>对异常值而言，中位数比均值更加鲁棒，MAE比MSE更不易受到离群值影响；但MAE存在一个严重问题，<strong>绝对值函数不是处处可导的</strong>，更新梯度始终相同，这不利于模型的学习，因此确定损失函数时不能用MAE。但是在评价模型时不影响，可以用。因此模型的评价方法可以和损失函数不同。</li>
+<li>得到的指标是否依赖于量纲 (即绝对度量，而不是相对度量)，如果指标依赖量纲那么不同模型之间可能因为量纲不同而无法比较；（需要归一化）</li>
+<li><strong>平方操作会放大样本中预测结果和真实结果较大的差距</strong>。MAE没有放大。<strong>而我们就是要解决目标函数最大差距，因为选RMSE更好一点</strong>。</li>
+</ol>
+</li>
+</ul>
+<h1 id="2-分类模型中的指标选择"><a href="#2-分类模型中的指标选择" class="headerlink" title="2. 分类模型中的指标选择"></a>2. 分类模型中的指标选择</h1><h2 id="混淆矩阵（confusion-matrix）"><a href="#混淆矩阵（confusion-matrix）" class="headerlink" title="混淆矩阵（confusion_matrix）"></a>混淆矩阵（confusion_matrix）</h2><table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">预测值_反例0</th>
+<th align="left">预测值_正例1</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">真实值_反例0</td>
+<td align="left">True Negative（TN）</td>
+<td align="left">False Positive（FP）</td>
+</tr>
+<tr>
+<td align="left">真实值_正例1</td>
+<td align="left">False Negative（FN）</td>
+<td align="left">True Positive（TP）</td>
+</tr>
+</tbody></table>
+<h2 id="指标"><a href="#指标" class="headerlink" title="指标"></a>指标</h2><h3 id="accuracy、precision、recall、F1"><a href="#accuracy、precision、recall、F1" class="headerlink" title="accuracy、precision、recall、F1"></a>accuracy、precision、recall、F1</h3><table>
+<thead>
+<tr>
+<th>名称</th>
+<th>中文</th>
+<th>公式</th>
+<th>定义/用法</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>accuracy</td>
+<td>准确度</td>
+<td>$$Accuracy = \frac{TP+TN}{TN+FP+FN+TP}$$</td>
+<td>所有样本中预测对的比率</td>
+<td>对于原本就有偏（正反例不平衡）的样本集，准确度无法说明问题。</td>
+</tr>
+<tr>
+<td>precision</td>
+<td>查准率</td>
+<td>$$Precision = \frac{TP}{TP+FP}$$</td>
+<td>所有预测为正例的样本中真的为正例的比率</td>
+<td>倾向于只挑选最有把握的样例时，查准率较高。</td>
+</tr>
+<tr>
+<td>recall</td>
+<td>查全率/召回率</td>
+<td>$$ Recall = \frac{TP}{TP+FN}$$</td>
+<td>所有真实正例中被预测对的比率</td>
+<td>倾向于预测为1时，查全率较高。</td>
+</tr>
+<tr>
+<td>F1-score</td>
+<td>-</td>
+<td>$$\frac{1}{F1}=\frac {1} {Precision}+\frac{1}{Recall}$$<br/>$$F1=\frac {2PR} {P+R}$$</td>
+<td>基于precision与recall的调和平均</td>
+<td>Precision与Recall相互矛盾；而F1越高，模型越稳健。</td>
+</tr>
+</tbody></table>
+<h3 id="P-R曲线"><a href="#P-R曲线" class="headerlink" title="P-R曲线"></a>P-R曲线</h3><ul>
+<li><p>在P-R曲线中，Recall为横坐标，Precision为纵坐标。在P-R曲线中，曲线越凸向右上角越好。</p>
+</li>
+<li><p>P-R曲线的生成方法：算法对样本进行分类时，都会有<strong>置信度</strong>，即表示该样本是正样本的概率，比如99%的概率认为样本Ａ是正例，１％的概率认为样本B是正例。通过选择合适的阈值，比如50%，对样本进行划分，概率大于50%的就认为是正例，小于50%的就是负例。通过置信度就可以<strong>对所有样本进行排序，再逐个样本的选择阈值</strong>，在该样本之前的都属于正例，该样本之后的都属于负例。每一个样本作为划分阈值时，都可以计算对应的precision和recall，那么就可以以此绘制曲线。</p>
+<img src="http://myimg.icyhh.xyz/ml/09.png?imageView2/format/webp" >
+（配图从Lecture0x01中生成）
+</li>
+<li><p>Recall值是递增的（但并非严格递增），随着划分点左移，正例被判别为正例的越来越多，不会减少。而精确率precision并非递减，二是有可能振荡的，虽然正例被判为正例的变多，但负例被判为正例的也变多了，因此precision会振荡，但整体趋势是下降。</p>
+</li>
+<li><p>P-R曲线肯定会经过（0, 1）点，比如将所有的样本全部判为负例，此时FP=0，TP=0，FN=正样本数，TN=负样本数，则（如果此处推断有误欢迎指出）$$Precision = \frac{TP}{TP+FP} =  \frac{TP}{TP} \rightarrow  1 $$   $$ Recall = \frac{TP}{TP+FN} = 0 $$  </p>
+</li>
+<li><p>随着阈值点左移（变小），将所有的样本全部判为正例时，FN=0，TN=0，FP=负样本数，TP=正样本数，故而有$$ Recall = \frac{TP}{TP+FN} = \frac{TP}{TP} = 1 $$  </p>
+</li>
+<li><p>但曲线最终不会到（1, 0）点。很多P-R曲线的终点看着快到（1,0）点了，可能是因为负例远远多于正例，此时FP$\gg$TP：</p>
+<p>$$Precision = \frac{TP}{TP+FP} \rightarrow  0  $$ </p>
+</li>
+</ul>
+<h3 id="ROC曲线"><a href="#ROC曲线" class="headerlink" title="ROC曲线"></a>ROC曲线</h3><ul>
+<li><p>ROC曲线称为受试者工作特征曲线 （Receiver Operating Characteristic Curve），又称为感受性曲线（Sensitivity Curve），此名称的由来有二战相关的典故；而AUC（Area Under Curve）是ROC曲线下的面积。在ROC曲线中曲线越凸向左上角越好。</p>
+<img src="http://myimg.icyhh.xyz/ml/08.png?imageView2/format/webp" >
+（配图从Lecture0x01中生成）
+</li>
+<li><p>0.5 &lt; AUC &lt; 1，优于随机猜测。这个分类器（模型）妥善设定阈值的话，能有预测价值。</p>
+</li>
+<li><p>AUC = 0.5，跟随机猜测一样（例：丢铜板），模型没有预测价值。</p>
+</li>
+<li><p>AUC &lt; 0.5，比随机猜测还差。</p>
+</li>
+<li><p><strong>最优零界点</strong>：保证TPR高的同时FPR要尽量的小，也即找到离（0,1）最近的点。</p>
+</li>
+</ul>
+<h3 id="曲线选择"><a href="#曲线选择" class="headerlink" title="曲线选择"></a>曲线选择</h3><p>1、 ROC曲线兼顾正例与负例，所以适用于评估分类器的整体性能；相比而言PR曲线完全聚焦于正例的评判。</p>
+<p>2、如果有多份数据且存在不同的类别分布，这时候如果只想单纯地比较分类器的性能且剔除类别分布改变的影响，则ROC曲线比较适合；如果想测试不同类别分布下对分类器的性能的影响，则PR曲线比较适合。</p>
+<p>3、相对来讲ROC曲线会稳定很多，在正负样本量都足够的情况下，ROC曲线足够反映模型的判断能力；但类别不平衡问题中，ROC曲线通常会给出一个乐观的效果估计，所以此时候还是PR曲线更好。</p>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><p>Ref. 1 木东居士/<a href="https://mp.weixin.qq.com/s/vvCM0vWH5kmRfrRWxqXT8Q" target="_blank" rel="noopener">机器学习的敲门砖：kNN算法（中）</a></br><br>Ref. 2 饼干 / <a href="https://mp.weixin.qq.com/s/Fi13jaEkM5EGjmS7Mm_Bjw" target="_blank" rel="noopener">评价分类结果（上）</a></br><br>Ref. 3 饼干 / <a href="https://mp.weixin.qq.com/s/BEmMdQd2y1hMu9wT8QYCPg" target="_blank" rel="noopener">模型之母：线性回归的评价指标</a></br><br>Ref. 4 云社区 / <a href="https://cloud.tencent.com/developer/article/1462976" target="_blank" rel="noopener">回归模型评估指标（机器学习基础）</a></br><br>Ref. 5 <a href="https://www.cnblogs.com/jpld/p/12022123.html" target="_blank" rel="noopener">深度研究：回归模型评价指标R2_score</a></br><br>Ref. 6 kuaizi_sophia / <a href="https://blog.csdn.net/kuaizi_sophia/article/details/84942307" target="_blank" rel="noopener">分类和回归模型常用的性能评价指标</a></br><br>Ref. 7 大数据文摘 / <a href="https://baijiahao.baidu.com/s?id=1603857666277651546&wfr=spider&for=pc" target="_blank" rel="noopener">机器学习大牛最常用的5个回归损失函数，你知道几个？</a></br><br>Ref. 8 <a href="https://www.plob.org/article/12476.html" target="_blank" rel="noopener">全面了解ROC曲线</a></br><br>Ref. 9 <a href="https://blog.csdn.net/b876144622/article/details/80009867" target="_blank" rel="noopener">P-R曲线深入理解</a></br></p>
+
+            </div>
+        
+        <footer class="article-footer">
+        </footer>
+    </div>
+</article>
+
+
+    
+<nav id="article-nav">
+    
+        <a href="/2020/03/11/Lecture0x03-feature/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Lecture0x03_feature engineering
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2020/02/24/Lecture0x01-knn/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Lecture0x01_knn</div>
+        </a>
+    
+</nav>
+
+
+
+
+
+    
+    
+
+
+
+
+<!-- baidu url auto push script -->
+<script type="text/javascript">
+    !function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=window.location.href,o=document.referrer;if(!e.test(r)){var n="//api.share.baidu.com/s.gif";o?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var t=new Image;t.src=n}}(window);
+</script>     
+</section>
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            Icy &copy; 2020 
+            <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-nd/4.0/80x15.png" /></a>
+            <br> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme - <a href="https://github.com/zthxxx/hexo-theme-Wikitten" target="_blank" rel="noopener">wikitten</a>
+            
+                <br>
+                <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i> <span id="busuanzi_value_site_pv"></span></span>
+                &nbsp;|&nbsp;
+                <span id="busuanzi_container_site_pv"><i class="fa fa-user"></i> <span id="busuanzi_value_site_uv"></span></span>
+            
+        </div>
+    </div>
+</footer>
+
+        
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true,
+            TeX: {
+                equationNumbers: {
+                  autoNumber: 'AMS'
+                }
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+    </div>
+</body>
+</html>
